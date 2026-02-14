@@ -1,0 +1,125 @@
+import {
+  createRouter,
+  createWebHistory,
+  type RouteRecordRaw,
+} from "vue-router";
+import { useAuthStore } from "@/stores/auth";
+import { ElMessage } from "element-plus";
+
+const routes: RouteRecordRaw[] = [
+  {
+    path: "/login",
+    name: "Login",
+    component: () => import("@/views/auth/LoginView.vue"),
+    meta: { guest: true, title: "Đăng nhập" },
+  },
+  {
+    path: "/",
+    component: () => import("@/layouts/MainLayout.vue"),
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: "",
+        name: "Dashboard",
+        component: () => import("@/views/dashboard/DashboardView.vue"),
+        meta: { title: "Tổng quan" },
+      },
+      {
+        path: "/patients",
+        name: "Patients",
+        component: () => import("@/views/patients/PatientListView.vue"),
+        meta: { title: "Quản lý bệnh nhân" },
+      },
+      {
+        path: "/patients/:id",
+        name: "PatientDetail",
+        component: () => import("@/views/patients/PatientDetailView.vue"),
+        meta: { title: "Chi tiết bệnh nhân" },
+      },
+      {
+        path: "/appointments",
+        name: "Appointments",
+        component: () => import("@/views/appointments/AppointmentListView.vue"),
+        meta: { title: "Quản lý lịch hẹn" },
+      },
+      {
+        path: "/treatments",
+        name: "Treatments",
+        component: () => import("@/views/treatments/TreatmentListView.vue"),
+        meta: { title: "Quản lý điều trị" },
+      },
+      {
+        path: "/services",
+        name: "Services",
+        component: () => import("@/views/services/ServiceListView.vue"),
+        meta: { title: "Quản lý dịch vụ", roles: ["ADMIN"] },
+      },
+      {
+        path: "/profile",
+        name: "Profile",
+        component: () => import("@/views/profile/ProfileView.vue"),
+        meta: { title: "Thông tin cá nhân" },
+      },
+    ],
+  },
+  {
+    path: "/:pathMatch(.*)*",
+    name: "NotFound",
+    component: () => import("@/views/error/NotFoundView.vue"),
+    meta: { title: "Không tìm thấy trang" },
+  },
+];
+
+const router = createRouter({
+  history: createWebHistory(),
+  routes,
+});
+
+// Navigation guard
+router.beforeEach(async (to, _from, next) => {
+  const authStore = useAuthStore();
+
+  // Set page title
+  document.title = to.meta.title
+    ? `${to.meta.title} - Dental Clinic`
+    : "Dental Clinic";
+
+  // ⚡ IMPORTANT: Load auth from cookie nếu chưa có (sau khi refresh)
+  if (!authStore.token && !authStore.user) {
+    await authStore.checkAuth();
+  }
+
+  // Check authentication
+  if (to.meta.requiresAuth) {
+    if (!authStore.isAuthenticated) {
+      ElMessage.warning("Vui lòng đăng nhập để tiếp tục");
+      next({ name: "Login", query: { redirect: to.fullPath } });
+      return;
+    }
+
+    // checkAuth() đã load user rồi, không cần gọi lại fetchUserInfo
+    // Chỉ cần check role permission
+
+    // Check role permission
+    if (to.meta.roles && Array.isArray(to.meta.roles)) {
+      const hasPermission = to.meta.roles.includes(
+        authStore.userRole as string,
+      );
+      if (!hasPermission) {
+        ElMessage.error("Bạn không có quyền truy cập trang này");
+        next({ name: "Dashboard" });
+        return;
+      }
+    }
+  }
+
+  // Redirect to dashboard if already logged in
+  if (to.meta.guest && authStore.isAuthenticated) {
+    next({ name: "Dashboard" });
+    return;
+  }
+
+  next();
+});
+
+export default router;
