@@ -1,9 +1,9 @@
 <template>
-  <div class="patient-list-view">
+  <div class="p-4">
     <el-card>
       <template #header>
-        <div class="page-header">
-          <h2>Quản lý bệnh nhân</h2>
+        <div class="flex items-center justify-between">
+          <h2 class="m-0 text-lg font-semibold">Quản lý bệnh nhân</h2>
           <el-button type="primary" @click="handleCreate">
             <el-icon><Plus /></el-icon>
             Thêm bệnh nhân
@@ -12,7 +12,7 @@
       </template>
 
       <!-- Search and filters -->
-      <div class="filter-section">
+      <div class="flex gap-3 flex-wrap">
         <el-input
           v-model="searchParams.keyword"
           placeholder="Tìm kiếm theo mã BN, tên bệnh nhân..."
@@ -34,16 +34,12 @@
       </div>
 
       <!-- Patient table -->
-      <el-table
-        :data="patients"
-        style="width: 100%; margin-top: 16px"
-        v-loading="loading"
-      >
+      <el-table :data="patients" class="w-full mt-4" v-loading="loading">
         <el-table-column type="index" label="STT" width="60" />
         <el-table-column prop="patientCode" label="Mã BN" width="120" />
         <el-table-column label="Họ tên" min-width="150">
           <template #default="{ row }">
-            <div class="patient-cell">
+            <div class="flex items-center gap-3">
               <el-avatar :size="32">
                 {{ row.fullName[0] }}
               </el-avatar>
@@ -90,7 +86,7 @@
         :total="totalElements"
         :page-sizes="[10, 20, 50, 100]"
         layout="total, sizes, prev, pager, next, jumper"
-        style="margin-top: 16px; justify-content: center"
+        class="mt-4 !justify-center"
         @size-change="handlePageSizeChange"
         @current-change="handlePageChange"
       />
@@ -109,7 +105,8 @@
 import { ref, reactive, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { Plus, Search } from "@element-plus/icons-vue";
-import { ElMessage, ElMessageBox } from "element-plus";
+import { ElMessageBox } from "element-plus";
+import { notification } from "@/utils/notification";
 import { patientApi } from "@/api/patient";
 import { formatDate } from "@/utils/date";
 import PatientFormDialog from "./components/PatientFormDialog.vue";
@@ -151,7 +148,7 @@ const loadPatients = async () => {
     totalPages.value = pageData.totalPages;
   } catch (error: any) {
     console.error("Load patients error:", error);
-    ElMessage.error(error?.message || "Không thể tải danh sách bệnh nhân");
+    notification.error(error?.message || "Không thể tải danh sách bệnh nhân");
   } finally {
     loading.value = false;
   }
@@ -222,12 +219,12 @@ const handleDelete = async (patient: Patient) => {
 
     loading.value = true;
     await patientApi.delete(patient.id);
-    ElMessage.success("Xóa bệnh nhân thành công!");
+    notification.success("Xóa bệnh nhân thành công!");
     loadPatients();
   } catch (error: any) {
     if (error !== "cancel") {
       console.error("Delete patient error:", error);
-      ElMessage.error(error?.message || "Không thể xóa bệnh nhân");
+      notification.error(error?.message || "Không thể xóa bệnh nhân");
     }
   } finally {
     loading.value = false;
@@ -246,30 +243,3 @@ onMounted(() => {
   loadPatients();
 });
 </script>
-
-<style scoped lang="scss">
-.patient-list-view {
-  .page-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-
-    h2 {
-      margin: 0;
-      font-size: 18px;
-    }
-  }
-
-  .filter-section {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-  }
-
-  .patient-cell {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-}
-</style>

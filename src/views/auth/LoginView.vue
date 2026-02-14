@@ -1,19 +1,33 @@
 <template>
-  <div class="login-view">
-    <div class="login-container">
-      <div class="login-left">
-        <div class="welcome-content">
-          <el-icon :size="80" color="#1890ff"><Tooth /></el-icon>
-          <h1>Hệ thống Quản lý Nha khoa</h1>
-          <p>Quản lý bệnh nhân, lịch hẹn và điều trị một cách hiệu quả</p>
+  <div
+    class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 p-5"
+  >
+    <div
+      class="flex w-full max-w-4xl min-h-[600px] bg-white rounded-2xl shadow-2xl overflow-hidden"
+    >
+      <!-- Left side -->
+      <div
+        class="flex-1 bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center p-10 md:p-15 text-white"
+      >
+        <div class="text-center">
+          <el-icon :size="80" color="#fff"><Tooth /></el-icon>
+          <h1 class="text-3xl md:text-4xl font-bold mt-6 mb-4">
+            Hệ thống Quản lý Nha khoa
+          </h1>
+          <p class="text-base opacity-90 leading-relaxed">
+            Quản lý bệnh nhân, lịch hẹn và điều trị một cách hiệu quả
+          </p>
         </div>
       </div>
 
-      <div class="login-right">
-        <div class="login-form-container">
-          <div class="form-header">
-            <h2>Đăng nhập</h2>
-            <p>Chào mừng bạn quay trở lại!</p>
+      <!-- Right side -->
+      <div
+        class="flex-1 flex items-center justify-center p-10 md:p-15 bg-white"
+      >
+        <div class="w-full max-w-md">
+          <div class="mb-10 text-center">
+            <h2 class="text-3xl font-bold text-gray-900 mb-2">Đăng nhập</h2>
+            <p class="text-gray-500 text-sm">Chào mừng bạn quay trở lại!</p>
           </div>
 
           <el-form
@@ -51,14 +65,14 @@
                 type="primary"
                 :loading="loading"
                 @click="handleLogin"
-                style="width: 100%"
+                class="w-full"
               >
                 {{ loading ? "Đang đăng nhập..." : "Đăng nhập" }}
               </el-button>
             </el-form-item>
           </el-form>
 
-          <div class="form-footer">
+          <div class="text-center mt-6">
             <el-link type="primary">Quên mật khẩu?</el-link>
           </div>
         </div>
@@ -123,112 +137,3 @@ const handleLogin = async () => {
   }
 };
 </script>
-
-<style scoped lang="scss">
-.login-view {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 20px;
-}
-
-.login-container {
-  display: flex;
-  width: 100%;
-  max-width: 1000px;
-  min-height: 600px;
-  background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  overflow: hidden;
-}
-
-.login-left {
-  flex: 1;
-  background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 40px;
-  color: #fff;
-
-  .welcome-content {
-    text-align: center;
-
-    h1 {
-      font-size: 32px;
-      font-weight: 700;
-      margin: 24px 0 16px;
-    }
-
-    p {
-      font-size: 16px;
-      opacity: 0.9;
-      line-height: 1.6;
-    }
-  }
-}
-
-.login-right {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 40px;
-  background: #fff;
-}
-
-.login-form-container {
-  width: 100%;
-  max-width: 400px;
-
-  .form-header {
-    margin-bottom: 40px;
-    text-align: center;
-
-    h2 {
-      font-size: 28px;
-      font-weight: 700;
-      color: #1f1f1f;
-      margin: 0 0 8px;
-    }
-
-    p {
-      color: #8c8c8c;
-      font-size: 14px;
-      margin: 0;
-    }
-  }
-
-  .form-footer {
-    text-align: center;
-    margin-top: 24px;
-  }
-}
-
-@media (max-width: 768px) {
-  .login-container {
-    flex-direction: column;
-  }
-
-  .login-left {
-    padding: 40px 20px;
-
-    .welcome-content {
-      h1 {
-        font-size: 24px;
-      }
-
-      p {
-        font-size: 14px;
-      }
-    }
-  }
-
-  .login-right {
-    padding: 40px 20px;
-  }
-}
-</style>

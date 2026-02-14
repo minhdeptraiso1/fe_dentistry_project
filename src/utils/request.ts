@@ -4,7 +4,7 @@ import axios, {
   type AxiosError,
   type AxiosRequestConfig,
 } from "axios";
-import { ElMessage } from "element-plus";
+import { ElNotification } from "element-plus";
 
 // Create axios instance
 const service: AxiosInstance = axios.create({
@@ -44,7 +44,12 @@ service.interceptors.response.use(
     // Check if request was successful
     if (res.success === false) {
       const errorMessage = res.error?.message || res.message || "Có lỗi xảy ra";
-      ElMessage.error(errorMessage);
+      ElNotification({
+        title: "Lỗi",
+        message: errorMessage,
+        type: "error",
+        position: "top-right",
+      });
       return Promise.reject(new Error(errorMessage));
     }
 
@@ -65,23 +70,53 @@ service.interceptors.response.use(
             "access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
           document.cookie =
             "refresh_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-          ElMessage.error("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại");
+          ElNotification({
+            title: "Phiên đăng nhập hết hạn",
+            message: "Vui lòng đăng nhập lại",
+            type: "warning",
+            position: "top-right",
+          });
           window.location.href = "/login";
           break;
         case 403:
-          ElMessage.error("Bạn không có quyền truy cập");
+          ElNotification({
+            title: "Từ chối truy cập",
+            message: "Bạn không có quyền truy cập",
+            type: "error",
+            position: "top-right",
+          });
           break;
         case 404:
-          ElMessage.error("Không tìm thấy tài nguyên");
+          ElNotification({
+            title: "Không tìm thấy",
+            message: "Không tìm thấy tài nguyên",
+            type: "warning",
+            position: "top-right",
+          });
           break;
         case 500:
-          ElMessage.error("Lỗi máy chủ. Vui lòng thử lại sau");
+          ElNotification({
+            title: "Lỗi máy chủ",
+            message: "Vui lòng thử lại sau",
+            type: "error",
+            position: "top-right",
+          });
           break;
         default:
-          ElMessage.error(error.message || "Có lỗi xảy ra");
+          ElNotification({
+            title: "Lỗi",
+            message: error.message || "Có lỗi xảy ra",
+            type: "error",
+            position: "top-right",
+          });
       }
     } else {
-      ElMessage.error("Không thể kết nối đến máy chủ");
+      ElNotification({
+        title: "Lỗi kết nối",
+        message: "Không thể kết nối đến máy chủ",
+        type: "error",
+        position: "top-right",
+      });
     }
 
     return Promise.reject(error);

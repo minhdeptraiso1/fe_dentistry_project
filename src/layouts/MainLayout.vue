@@ -1,11 +1,14 @@
 <template>
-  <div class="main-layout">
+  <div class="flex h-screen overflow-hidden">
     <!-- Sidebar -->
-    <aside class="sidebar" :class="{ collapsed: appStore.sidebarCollapsed }">
-      <div class="sidebar-header">
-        <div class="logo">
+    <aside
+      class="bg-[#001529] transition-[width] duration-300 flex flex-col"
+      :class="appStore.sidebarCollapsed ? 'w-16' : 'w-64'"
+    >
+      <div class="h-16 flex items-center px-4 border-b border-white/10">
+        <div class="flex items-center gap-3 text-white text-xl font-semibold">
           <el-icon :size="28"><Tooth /></el-icon>
-          <span v-show="!appStore.sidebarCollapsed" class="logo-text"
+          <span v-show="!appStore.sidebarCollapsed" class="whitespace-nowrap"
             >Dental Clinic</span
           >
         </div>
@@ -15,7 +18,7 @@
         :default-active="activeMenu"
         :collapse="appStore.sidebarCollapsed"
         :router="true"
-        class="sidebar-menu"
+        class="flex-1 border-none bg-transparent"
       >
         <el-menu-item index="/" :route="{ name: 'Dashboard' }">
           <el-icon><HomeFilled /></el-icon>
@@ -49,27 +52,33 @@
     </aside>
 
     <!-- Main content -->
-    <div class="main-container">
+    <div class="flex-1 flex flex-col overflow-hidden">
       <!-- Header -->
-      <header class="header">
-        <div class="header-left">
+      <header
+        class="h-16 bg-white shadow-sm flex items-center justify-between px-6 z-10"
+      >
+        <div class="flex items-center gap-4">
           <el-button circle @click="appStore.toggleSidebar">
             <el-icon
               ><Fold v-if="!appStore.sidebarCollapsed" /><Expand v-else
             /></el-icon>
           </el-button>
-          <h2 class="page-title">
+          <h2 class="m-0 text-xl font-semibold text-gray-900">
             {{ appStore.pageTitle || route.meta.title }}
           </h2>
         </div>
 
-        <div class="header-right">
+        <div>
           <el-dropdown trigger="click">
-            <div class="user-profile">
+            <div
+              class="flex items-center gap-3 cursor-pointer px-3 py-1 rounded-full hover:bg-gray-100 transition-all"
+            >
               <el-avatar :size="40" :src="authStore.user?.avatar">
                 {{ authStore.user?.fullName?.[0] }}
               </el-avatar>
-              <span class="user-name">{{ authStore.user?.fullName }}</span>
+              <span class="font-medium text-gray-900">{{
+                authStore.user?.fullName
+              }}</span>
               <el-icon><ArrowDown /></el-icon>
             </div>
             <template #dropdown>
@@ -89,7 +98,7 @@
       </header>
 
       <!-- Page content -->
-      <main class="content">
+      <main class="flex-1 overflow-y-auto bg-gray-100 p-6">
         <router-view v-slot="{ Component }">
           <transition name="fade" mode="out-in">
             <component :is="Component" />
@@ -143,124 +152,22 @@ const handleLogout = async () => {
 };
 </script>
 
-<style scoped lang="scss">
-.main-layout {
-  display: flex;
-  height: 100vh;
-  overflow: hidden;
+<style scoped>
+/* Element Plus menu custom styles */
+:deep(.el-menu-item) {
+  color: rgba(255, 255, 255, 0.85);
 }
 
-.sidebar {
-  width: 260px;
-  background: #001529;
-  transition: width 0.3s;
-  display: flex;
-  flex-direction: column;
-
-  &.collapsed {
-    width: 64px;
-  }
-
-  .sidebar-header {
-    height: 64px;
-    display: flex;
-    align-items: center;
-    padding: 0 16px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      color: #fff;
-      font-size: 20px;
-      font-weight: 600;
-
-      .logo-text {
-        white-space: nowrap;
-      }
-    }
-  }
-
-  .sidebar-menu {
-    flex: 1;
-    border: none;
-    background: transparent;
-
-    :deep(.el-menu-item) {
-      color: rgba(255, 255, 255, 0.85);
-
-      &:hover {
-        background: rgba(255, 255, 255, 0.08);
-      }
-
-      &.is-active {
-        background: #1890ff;
-        color: #fff;
-      }
-    }
-  }
+:deep(.el-menu-item:hover) {
+  background: rgba(255, 255, 255, 0.08) !important;
 }
 
-.main-container {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+:deep(.el-menu-item.is-active) {
+  background: #1890ff !important;
+  color: #fff !important;
 }
 
-.header {
-  height: 64px;
-  background: #fff;
-  box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 24px;
-  z-index: 10;
-
-  .header-left {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-
-    .page-title {
-      margin: 0;
-      font-size: 20px;
-      font-weight: 600;
-      color: #1f1f1f;
-    }
-  }
-
-  .header-right {
-    .user-profile {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      cursor: pointer;
-      padding: 4px 12px;
-      border-radius: 20px;
-      transition: all 0.3s;
-
-      &:hover {
-        background: #f5f5f5;
-      }
-
-      .user-name {
-        font-weight: 500;
-        color: #1f1f1f;
-      }
-    }
-  }
-}
-
-.content {
-  flex: 1;
-  overflow-y: auto;
-  background: #f0f2f5;
-  padding: 24px;
-}
-
+/* Transition */
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.2s ease;

@@ -3,7 +3,7 @@ import { ref, computed } from "vue";
 import { authApi } from "@/api/auth";
 import { tokenStorage } from "@/utils/storage";
 import type { User, LoginRequest } from "@/types";
-import { ElMessage } from "element-plus";
+import { notification } from "@/utils/notification";
 
 export const useAuthStore = defineStore("auth", () => {
   // State
@@ -54,11 +54,13 @@ export const useAuthStore = defineStore("auth", () => {
       // Lưu user vào localStorage để tránh phải gọi API /auth/me
       tokenStorage.setUser(userData);
 
-      ElMessage.success("Đăng nhập thành công!");
+      notification.success("Đăng nhập thành công!");
       return true;
     } catch (error) {
       console.error("Login error:", error);
-      ElMessage.error("Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin!");
+      notification.error(
+        "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin!",
+      );
       return false;
     } finally {
       loading.value = false;
@@ -76,7 +78,7 @@ export const useAuthStore = defineStore("auth", () => {
       token.value = null;
       tokenStorage.clearTokens();
       tokenStorage.clearUser();
-      ElMessage.success("Đăng xuất thành công!");
+      notification.success("Đăng xuất thành công!");
     }
   };
 

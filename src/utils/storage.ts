@@ -73,14 +73,19 @@ export const tokenStorage = {
     cookieUtils.remove("refresh_token");
   },
 
-  // User data management (localStorage vì cookie không lưu object lớn)
+  // User data management - Lưu vào cookie cùng với tokens
   setUser(user: any): void {
-    localStorage.setItem("user_data", JSON.stringify(user));
+    // Lưu user data vào cookie với expire 7 ngày (cùng với access_token)
+    cookieUtils.set("user_data", JSON.stringify(user), {
+      days: 7,
+      secure: false, // Development: false, Production: true
+      sameSite: "Lax",
+    });
   },
 
   getUser(): any | null {
     try {
-      const userData = localStorage.getItem("user_data");
+      const userData = cookieUtils.get("user_data");
       return userData ? JSON.parse(userData) : null;
     } catch {
       return null;
@@ -88,6 +93,6 @@ export const tokenStorage = {
   },
 
   clearUser(): void {
-    localStorage.removeItem("user_data");
+    cookieUtils.remove("user_data");
   },
 };

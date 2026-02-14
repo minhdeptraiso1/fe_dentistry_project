@@ -82,7 +82,8 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from "vue";
-import { ElMessage, type FormInstance, type FormRules } from "element-plus";
+import { type FormInstance, type FormRules } from "element-plus";
+import { notification } from "@/utils/notification";
 import { patientApi } from "@/api/patient";
 import type {
   Patient,
@@ -191,18 +192,18 @@ const handleSubmit = async () => {
         props.patient.id,
         formData as UpdatePatientRequest,
       );
-      ElMessage.success("Cập nhật bệnh nhân thành công!");
+      notification.success("Cập nhật bệnh nhân thành công!");
     } else {
       // Create patient
       await patientApi.create(formData as CreatePatientRequest);
-      ElMessage.success("Thêm bệnh nhân thành công!");
+      notification.success("Thêm bệnh nhân thành công!");
     }
 
     emit("success");
     handleClose();
   } catch (error: any) {
     console.error("Submit patient error:", error);
-    ElMessage.error(error?.message || "Có lỗi xảy ra, vui lòng thử lại");
+    notification.error(error?.message || "Có lỗi xảy ra, vui lòng thử lại");
   } finally {
     loading.value = false;
   }
