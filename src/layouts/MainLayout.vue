@@ -43,11 +43,7 @@
           <span>Điều trị</span>
         </el-menu-item>
 
-        <el-menu-item
-          v-if="authStore.isAdmin"
-          index="/services"
-          :route="{ name: 'Services' }"
-        >
+        <el-menu-item index="/services" :route="{ name: 'Services' }">
           <el-icon><Grid /></el-icon>
           <span>Dịch vụ</span>
         </el-menu-item>

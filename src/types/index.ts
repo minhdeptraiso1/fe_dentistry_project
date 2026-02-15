@@ -140,3 +140,7 @@ export interface Payment {
   notes?: string;
   createdAt: string;
 }
+
+// Re-export module types
+export * from "./medicalRecord";
+export * from "./service";

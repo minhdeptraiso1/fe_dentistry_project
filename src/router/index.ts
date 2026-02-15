@@ -60,7 +60,13 @@ const routes: RouteRecordRaw[] = [
         path: "/services",
         name: "Services",
         component: () => import("@/views/services/ServiceListView.vue"),
-        meta: { title: "Quản lý dịch vụ", roles: ["ADMIN"] },
+        meta: { title: "Danh mục dịch vụ" }, // All roles can view, only ADMIN can create/edit/delete
+      },
+      {
+        path: "/services/:id",
+        name: "ServiceDetail",
+        component: () => import("@/views/services/ServiceDetailView.vue"),
+        meta: { title: "Chi tiết dịch vụ" },
       },
       {
         path: "/profile",
