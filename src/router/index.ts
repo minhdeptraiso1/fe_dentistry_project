@@ -37,10 +37,18 @@ const routes: RouteRecordRaw[] = [
         meta: { title: "Chi tiết bệnh nhân" },
       },
       {
-        path: "/appointments",
-        name: "Appointments",
-        component: () => import("@/views/appointments/AppointmentListView.vue"),
-        meta: { title: "Quản lý lịch hẹn" },
+        path: "/medical-records",
+        name: "MedicalRecords",
+        component: () =>
+          import("@/views/medical-records/MedicalRecordListView.vue"),
+        meta: { title: "Quản lý phiếu khám" },
+      },
+      {
+        path: "/medical-records/:id",
+        name: "MedicalRecordDetail",
+        component: () =>
+          import("@/views/medical-records/MedicalRecordDetailView.vue"),
+        meta: { title: "Chi tiết phiếu khám" },
       },
       {
         path: "/treatments",

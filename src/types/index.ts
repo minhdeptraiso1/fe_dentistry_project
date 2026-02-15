@@ -30,14 +30,15 @@ export interface PageResponse<T> {
 
 // User & Auth Types
 export interface User {
-  id: string;
+  id?: string; // Optional - not always returned
   username: string;
   email: string;
-  fullName: string;
+  fullName?: string; // Optional - not in /users/me response
   phone?: string;
-  role: "ADMIN" | "DOCTOR" | "RECEPTIONIST" | "PATIENT";
+  role: "ADMIN" | "DOCTOR" | "CASHIER"; // Match backend UserRole enum
+  enabled?: boolean; // From /users/me response
   avatar?: string;
-  createdAt: string;
+  createdAt?: string;
 }
 
 export interface LoginRequest {
@@ -96,21 +97,8 @@ export interface PatientSearchParams {
   size?: number;
 }
 
-// Appointment Types
-export interface Appointment {
-  id: string;
-  patientId: string;
-  patientName?: string;
-  doctorId: string;
-  doctorName?: string;
-  appointmentDate: string;
-  startTime: string;
-  endTime: string;
-  status: "SCHEDULED" | "CONFIRMED" | "COMPLETED" | "CANCELLED";
-  reason?: string;
-  notes?: string;
-  createdAt: string;
-}
+// Medical Record Types (imported from medicalRecord module)
+export * from "./medicalRecord";
 
 // Treatment Types
 export interface Treatment {

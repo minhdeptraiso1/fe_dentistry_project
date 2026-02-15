@@ -19,7 +19,7 @@ export const authApi = {
 
   // Get current user info
   getCurrentUser() {
-    return request.get<ApiResponse<User>>("/auth/me");
+    return request.get<User>("/users/me");
   },
 
   // Refresh token
