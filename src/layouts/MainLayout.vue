@@ -47,6 +47,14 @@
           <el-icon><Grid /></el-icon>
           <span>Dịch vụ</span>
         </el-menu-item>
+
+        <el-menu-item
+          index="/treatment-plans"
+          :route="{ name: 'TreatmentPlans' }"
+        >
+          <el-icon><Notebook /></el-icon>
+          <span>Kế hoạch điều trị</span>
+        </el-menu-item>
       </el-menu>
     </aside>
 
@@ -118,6 +126,7 @@ import {
   Calendar,
   Document,
   Grid,
+  Notebook,
   Fold,
   Expand,
   ArrowDown,

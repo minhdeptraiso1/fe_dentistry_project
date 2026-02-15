@@ -1,15 +1,27 @@
 import { defineStore } from "pinia";
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { authApi } from "@/api/auth";
 import { tokenStorage } from "@/utils/storage";
 import type { User, LoginRequest } from "@/types";
 import { notification } from "@/utils/notification";
 
 export const useAuthStore = defineStore("auth", () => {
-  // State
-  const user = ref<User | null>(null);
-  const token = ref<string | null>(tokenStorage.getAccessToken());
+  // State - Tự động restore từ cookie khi khởi tạo
+  const savedUser = tokenStorage.getUser();
+  const savedToken = tokenStorage.getAccessToken();
+
+  const user = ref<User | null>(savedUser);
+  const token = ref<string | null>(savedToken);
   const loading = ref(false);
+
+  // Log để debug
+  if (savedUser) {
+    console.log(
+      "Restored user from cookie:",
+      savedUser.username,
+      savedUser.role,
+    );
+  }
 
   // Getters
   const isAuthenticated = computed(() => !!token.value);
@@ -106,6 +118,24 @@ export const useAuthStore = defineStore("auth", () => {
       }
     }
   };
+
+  // Tự động sync state vào cookie khi thay đổi
+  watch(user, (newUser) => {
+    if (newUser) {
+      tokenStorage.setUser(newUser);
+      console.log("Auto-saved user to cookie:", newUser.username);
+    } else {
+      tokenStorage.clearUser();
+    }
+  });
+
+  watch(token, (newToken) => {
+    if (newToken) {
+      tokenStorage.setAccessToken(newToken);
+    } else {
+      tokenStorage.clearTokens();
+    }
+  });
 
   return {
     // State
