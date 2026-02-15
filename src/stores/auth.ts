@@ -16,7 +16,7 @@ export const useAuthStore = defineStore("auth", () => {
   const userRole = computed(() => user.value?.role);
   const isAdmin = computed(() => user.value?.role === "ADMIN");
   const isDoctor = computed(() => user.value?.role === "DOCTOR");
-  const isReceptionist = computed(() => user.value?.role === "RECEPTIONIST");
+  const isCashier = computed(() => user.value?.role === "CASHIER");
 
   // Actions
   const login = async (credentials: LoginRequest) => {
@@ -26,9 +26,7 @@ export const useAuthStore = defineStore("auth", () => {
 
       console.log("Login response:", loginData);
 
-      // Axios interceptor unwrapped ApiResponse, so loginData is the actual data
-      // loginData = { accessToken, id, username, email, fullName, role, ... }
-
+      // Backend returns { accessToken, refreshToken } only
       // Save tokens
       token.value = loginData.accessToken;
       tokenStorage.setAccessToken(loginData.accessToken);
@@ -36,23 +34,8 @@ export const useAuthStore = defineStore("auth", () => {
         tokenStorage.setRefreshToken(loginData.refreshToken);
       }
 
-      // Save user info - either from nested user object or direct properties
-      const userData = loginData.user
-        ? loginData.user
-        : ({
-            id: loginData.id,
-            username: loginData.username,
-            email: loginData.email,
-            fullName: loginData.fullName,
-            role: loginData.role,
-            phone: loginData.phone,
-            avatar: loginData.avatar,
-            createdAt: loginData.createdAt,
-          } as User);
-
-      user.value = userData;
-      // Lưu user vào localStorage để tránh phải gọi API /auth/me
-      tokenStorage.setUser(userData);
+      // Fetch user info from /users/me to get full user data (including id)
+      await fetchUserInfo();
 
       notification.success("Đăng nhập thành công!");
       return true;
@@ -135,7 +118,7 @@ export const useAuthStore = defineStore("auth", () => {
     userRole,
     isAdmin,
     isDoctor,
-    isReceptionist,
+    isCashier,
 
     // Actions
     login,

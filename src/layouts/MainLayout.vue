@@ -30,13 +30,16 @@
           <span>Bệnh nhân</span>
         </el-menu-item>
 
-        <el-menu-item index="/appointments" :route="{ name: 'Appointments' }">
-          <el-icon><Calendar /></el-icon>
-          <span>Lịch hẹn</span>
+        <el-menu-item
+          index="/medical-records"
+          :route="{ name: 'MedicalRecords' }"
+        >
+          <el-icon><Document /></el-icon>
+          <span>Phiếu khám</span>
         </el-menu-item>
 
         <el-menu-item index="/treatments" :route="{ name: 'Treatments' }">
-          <el-icon><Document /></el-icon>
+          <el-icon><Calendar /></el-icon>
           <span>Điều trị</span>
         </el-menu-item>
 
@@ -74,11 +77,9 @@
               class="flex items-center gap-3 cursor-pointer px-3 py-1 rounded-full hover:bg-gray-100 transition-all"
             >
               <el-avatar :size="40" :src="authStore.user?.avatar">
-                {{ authStore.user?.fullName?.[0] }}
+                {{ avatarInitial }}
               </el-avatar>
-              <span class="font-medium text-gray-900">{{
-                authStore.user?.fullName
-              }}</span>
+              <span class="font-medium text-gray-900">{{ displayName }}</span>
               <el-icon><ArrowDown /></el-icon>
             </div>
             <template #dropdown>
@@ -136,6 +137,19 @@ const authStore = useAuthStore();
 const appStore = useAppStore();
 
 const activeMenu = computed(() => route.path);
+
+// Display name with fallback: fullName -> username -> email
+const displayName = computed(() => {
+  const user = authStore.user;
+  return user?.fullName || user?.username || user?.email || "User";
+});
+
+// Avatar initial with fallback
+const avatarInitial = computed(() => {
+  const user = authStore.user;
+  const name = user?.fullName || user?.username || user?.email || "?";
+  return name[0]?.toUpperCase() || "?";
+});
 
 const handleLogout = async () => {
   try {
