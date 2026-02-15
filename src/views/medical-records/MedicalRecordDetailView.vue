@@ -5,6 +5,13 @@
         <h2 class="m-0 text-lg font-semibold">Chi tiết phiếu khám</h2>
       </template>
       <template #extra>
+        <el-button
+          v-if="canCreateTreatmentPlan"
+          type="success"
+          @click="handleCreateTreatmentPlan"
+        >
+          Tạo kế hoạch điều trị
+        </el-button>
         <el-button v-if="canEdit" type="primary" @click="handleEdit">
           Chỉnh sửa
         </el-button>
@@ -101,6 +108,14 @@ const canEdit = computed(() => {
 });
 
 /**
+ * Check if can create treatment plan
+ */
+const canCreateTreatmentPlan = computed(() => {
+  const role = authStore.user?.role;
+  return role === "ADMIN" || role === "DOCTOR";
+});
+
+/**
  * Format datetime
  */
 const formatDateTime = (dateStr: string) => {
@@ -158,6 +173,21 @@ const handleEdit = () => {
 const handleUpdateSuccess = () => {
   dialogVisible.value = false;
   loadRecord(); // Reload data
+};
+
+/**
+ * Handle create treatment plan
+ */
+const handleCreateTreatmentPlan = () => {
+  if (!record.value) return;
+  // Navigate to treatment plans page with medicalRecordId in query
+  router.push({
+    name: "TreatmentPlans",
+    query: {
+      medicalRecordId: record.value.id,
+      patientId: record.value.patientId,
+    },
+  });
 };
 
 onMounted(() => {

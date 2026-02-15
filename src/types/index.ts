@@ -144,3 +144,4 @@ export interface Payment {
 // Re-export module types
 export * from "./medicalRecord";
 export * from "./service";
+export * from "./treatmentPlan";
