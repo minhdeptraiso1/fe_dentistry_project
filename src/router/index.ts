@@ -83,6 +83,18 @@ const routes: RouteRecordRaw[] = [
         meta: { title: "Chi tiết kế hoạch điều trị" },
       },
       {
+        path: "/invoices",
+        name: "Invoices",
+        component: () => import("@/views/invoices/InvoiceListView.vue"),
+        meta: { title: "Quản lý hóa đơn" },
+      },
+      {
+        path: "/invoices/:id",
+        name: "InvoiceDetail",
+        component: () => import("@/views/invoices/InvoiceDetailView.vue"),
+        meta: { title: "Chi tiết hóa đơn" },
+      },
+      {
         path: "/profile",
         name: "Profile",
         component: () => import("@/views/profile/ProfileView.vue"),
