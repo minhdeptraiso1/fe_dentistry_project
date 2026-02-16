@@ -145,3 +145,4 @@ export interface Payment {
 export * from "./medicalRecord";
 export * from "./service";
 export * from "./treatmentPlan";
+export * from "./invoice";

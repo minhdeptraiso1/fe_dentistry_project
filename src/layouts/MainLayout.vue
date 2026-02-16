@@ -55,6 +55,11 @@
           <el-icon><Notebook /></el-icon>
           <span>Kế hoạch điều trị</span>
         </el-menu-item>
+
+        <el-menu-item index="/invoices" :route="{ name: 'Invoices' }">
+          <el-icon><Document /></el-icon>
+          <span>Hóa đơn</span>
+        </el-menu-item>
       </el-menu>
     </aside>
 
