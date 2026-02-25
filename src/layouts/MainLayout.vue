@@ -60,6 +60,16 @@
           <el-icon><Document /></el-icon>
           <span>Hóa đơn</span>
         </el-menu-item>
+
+        <el-menu-item index="/medicines" :route="{ name: 'Medicines' }">
+          <el-icon><Pill /></el-icon>
+          <span>Thuốc</span>
+        </el-menu-item>
+
+        <el-menu-item index="/prescriptions" :route="{ name: 'Prescriptions' }">
+          <el-icon><DocumentCopy /></el-icon>
+          <span>Đơn thuốc</span>
+        </el-menu-item>
       </el-menu>
     </aside>
 
@@ -130,13 +140,18 @@ import {
   User,
   Calendar,
   Document,
+  DocumentCopy,
   Grid,
   Notebook,
   Fold,
   Expand,
   ArrowDown,
   SwitchButton,
+  Box,
 } from "@element-plus/icons-vue";
+
+// Use Box icon for medicines
+const Pill = Box;
 
 // Fake icon for demo - replace with actual tooth icon
 const Tooth = HomeFilled;

@@ -95,6 +95,19 @@ const routes: RouteRecordRaw[] = [
         meta: { title: "Chi tiết hóa đơn" },
       },
       {
+        path: "/medicines",
+        name: "Medicines",
+        component: () => import("@/views/medicines/MedicineListView.vue"),
+        meta: { title: "Quản lý thuốc" },
+      },
+      {
+        path: "/prescriptions",
+        name: "Prescriptions",
+        component: () =>
+          import("@/views/prescriptions/PrescriptionListView.vue"),
+        meta: { title: "Quản lý đơn thuốc" },
+      },
+      {
         path: "/profile",
         name: "Profile",
         component: () => import("@/views/profile/ProfileView.vue"),
