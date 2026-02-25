@@ -146,3 +146,5 @@ export * from "./medicalRecord";
 export * from "./service";
 export * from "./treatmentPlan";
 export * from "./invoice";
+export * from "./medicine";
+export * from "./prescription";
