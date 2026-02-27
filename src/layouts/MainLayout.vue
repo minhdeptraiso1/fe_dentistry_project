@@ -78,6 +78,15 @@
           <el-icon><DataAnalysis /></el-icon>
           <span>Báo cáo tồn kho</span>
         </el-menu-item>
+
+        <el-menu-item
+          v-if="authStore.isAdmin"
+          index="/expenses"
+          :route="{ name: 'Expenses' }"
+        >
+          <el-icon><Money /></el-icon>
+          <span>Chi phí</span>
+        </el-menu-item>
       </el-menu>
     </aside>
 
@@ -158,6 +167,7 @@ import {
   SwitchButton,
   Box,
   DataAnalysis,
+  Money,
 } from "@element-plus/icons-vue";
 import ExpiryWarningButton from "@/components/ExpiryWarningButton.vue";
 
