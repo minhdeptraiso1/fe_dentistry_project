@@ -62,4 +62,25 @@ export const medicineApi = {
       { params },
     );
   },
+
+  /**
+   * Get medicine batch history
+   * Roles: ADMIN, CASHIER
+   */
+  batchHistory(id: string, params?: { page?: number; size?: number }) {
+    return request.get<PageResponse<MedicineBatch>>(
+      `/medicines/${id}/batches`,
+      { params },
+    );
+  },
+
+  /**
+   * Dispose expired medicine batch
+   * Roles: ADMIN, CASHIER
+   */
+  disposeBatch(batchId: string, reason?: string) {
+    return request.post<void>(`/medicines/batches/${batchId}/dispose`, null, {
+      params: { reason },
+    });
+  },
 };
