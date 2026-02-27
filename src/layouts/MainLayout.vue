@@ -70,6 +70,14 @@
           <el-icon><DocumentCopy /></el-icon>
           <span>Đơn thuốc</span>
         </el-menu-item>
+
+        <el-menu-item
+          index="/inventory-report"
+          :route="{ name: 'InventoryReport' }"
+        >
+          <el-icon><DataAnalysis /></el-icon>
+          <span>Báo cáo tồn kho</span>
+        </el-menu-item>
       </el-menu>
     </aside>
 
@@ -90,7 +98,8 @@
           </h2>
         </div>
 
-        <div>
+        <div class="flex items-center gap-3">
+          <ExpiryWarningButton />
           <el-dropdown trigger="click">
             <div
               class="flex items-center gap-3 cursor-pointer px-3 py-1 rounded-full hover:bg-gray-100 transition-all"
@@ -148,7 +157,9 @@ import {
   ArrowDown,
   SwitchButton,
   Box,
+  DataAnalysis,
 } from "@element-plus/icons-vue";
+import ExpiryWarningButton from "@/components/ExpiryWarningButton.vue";
 
 // Use Box icon for medicines
 const Pill = Box;

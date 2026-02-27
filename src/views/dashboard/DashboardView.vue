@@ -1,281 +1,618 @@
 <template>
-  <div class="dashboard-view">
-    <el-row :gutter="24">
-      <!-- Statistics Cards -->
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard
-          title="Tổng bệnh nhân"
-          :value="statistics.totalPatients"
-          icon="User"
-          color="#1890ff"
-          trend="+12%"
-        />
-      </el-col>
-
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard
-          title="Lịch hẹn hôm nay"
-          :value="statistics.todayAppointments"
-          icon="Calendar"
-          color="#52c41a"
-        />
-      </el-col>
-
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard
-          title="Đang điều trị"
-          :value="statistics.activeTreatments"
-          icon="Document"
-          color="#faad14"
-        />
-      </el-col>
-
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard
-          title="Doanh thu tháng"
-          :value="`${statistics.monthlyRevenue.toLocaleString()} đ`"
-          icon="Money"
-          color="#f5222d"
-          trend="+8%"
-        />
-      </el-col>
-    </el-row>
-
-    <el-row :gutter="24" style="margin-top: 24px">
-      <!-- Recent Appointments -->
-      <el-col :xs="24" :lg="12">
-        <el-card class="dashboard-card">
-          <template #header>
-            <div class="card-header">
-              <h3>Lịch hẹn gần đây</h3>
-              <el-button
-                text
-                type="primary"
-                @click="router.push('/appointments')"
-              >
-                Xem tất cả
-              </el-button>
-            </div>
-          </template>
-          <el-empty
-            v-if="recentAppointments.length === 0"
-            description="Chưa có lịch hẹn"
+  <div class="dashboard-container">
+    <!-- Date Range Filter -->
+    <el-card class="filter-card mb-4">
+      <el-row :gutter="16" align="middle">
+        <el-col :span="12">
+          <h2 class="text-xl font-semibold">Dashboard</h2>
+        </el-col>
+        <el-col :span="12" class="text-right">
+          <el-date-picker
+            v-model="dateRange"
+            type="daterange"
+            range-separator="đến"
+            start-placeholder="Từ ngày"
+            end-placeholder="Đến ngày"
+            format="DD/MM/YYYY"
+            value-format="YYYY-MM-DD"
+            @change="loadData"
           />
-          <div v-else class="appointment-list">
-            <div
-              v-for="appointment in recentAppointments"
-              :key="appointment.id"
-              class="appointment-item"
-            >
-              <div class="appointment-info">
-                <div class="patient-name">{{ appointment.patientName }}</div>
-                <div class="appointment-time">
-                  <el-icon><Clock /></el-icon>
-                  {{ formatDateTime(appointment.appointmentDate) }}
-                </div>
+        </el-col>
+      </el-row>
+    </el-card>
+
+    <!-- Summary Cards -->
+    <el-row :gutter="16" class="mb-4">
+      <el-col :xs="24" :sm="12" :lg="6">
+        <el-card shadow="hover" class="stat-card revenue-card">
+          <div class="stat-content">
+            <el-icon class="stat-icon"><Money /></el-icon>
+            <div class="stat-info">
+              <div class="stat-label">Doanh thu thuần</div>
+              <div class="stat-value">
+                {{ formatCurrency(summary.netRevenue) }}
               </div>
-              <el-tag :type="getStatusType(appointment.status)">
-                {{ getStatusText(appointment.status) }}
-              </el-tag>
             </div>
           </div>
         </el-card>
       </el-col>
-
-      <!-- Recent Patients -->
-      <el-col :xs="24" :lg="12">
-        <el-card class="dashboard-card">
-          <template #header>
-            <div class="card-header">
-              <h3>Bệnh nhân mới</h3>
-              <el-button text type="primary" @click="router.push('/patients')">
-                Xem tất cả
-              </el-button>
-            </div>
-          </template>
-          <el-empty
-            v-if="recentPatients.length === 0"
-            description="Chưa có bệnh nhân"
-          />
-          <div v-else class="patient-list">
-            <div
-              v-for="patient in recentPatients"
-              :key="patient.id"
-              class="patient-item"
-              @click="router.push(`/patients/${patient.id}`)"
-            >
-              <el-avatar :size="40" :src="patient.avatar">
-                {{ patient.fullName[0] }}
-              </el-avatar>
-              <div class="patient-info">
-                <div class="patient-name">{{ patient.fullName }}</div>
-                <div class="patient-phone">{{ patient.phone }}</div>
+      <el-col :xs="24" :sm="12" :lg="6">
+        <el-card shadow="hover" class="stat-card cost-card">
+          <div class="stat-content">
+            <el-icon class="stat-icon"><ShoppingCart /></el-icon>
+            <div class="stat-info">
+              <div class="stat-label">Tổng chi phí</div>
+              <div class="stat-value">
+                {{ formatCurrency(summary.totalCosts) }}
               </div>
-              <el-icon><ArrowRight /></el-icon>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :xs="24" :sm="12" :lg="6">
+        <el-card shadow="hover" class="stat-card profit-card">
+          <div class="stat-content">
+            <el-icon class="stat-icon"><TrendCharts /></el-icon>
+            <div class="stat-info">
+              <div class="stat-label">Lợi nhuận ước tính</div>
+              <div class="stat-value">
+                {{ formatCurrency(summary.estimatedProfit) }}
+              </div>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :xs="24" :sm="12" :lg="6">
+        <el-card shadow="hover" class="stat-card unpaid-card">
+          <div class="stat-content">
+            <el-icon class="stat-icon"><Document /></el-icon>
+            <div class="stat-info">
+              <div class="stat-label">Công nợ</div>
+              <div class="stat-value">
+                {{ formatCurrency(summary.unpaidAmount) }}
+              </div>
             </div>
           </div>
         </el-card>
       </el-col>
     </el-row>
+
+    <!-- Charts Row 1: Revenue -->
+    <el-row :gutter="16" class="mb-4">
+      <el-col :xs="24" :lg="16">
+        <el-card v-loading="loading">
+          <template #header>
+            <div class="card-header">
+              <span class="font-semibold">Doanh thu theo ngày</span>
+            </div>
+          </template>
+          <v-chart
+            v-if="revenueChartOptions"
+            :option="revenueChartOptions"
+            :style="{ height: '350px' }"
+            autoresize
+          />
+        </el-card>
+      </el-col>
+      <el-col :xs="24" :lg="8">
+        <el-card v-loading="loading">
+          <template #header>
+            <div class="card-header">
+              <span class="font-semibold">Doanh thu theo loại</span>
+            </div>
+          </template>
+          <v-chart
+            v-if="serviceTypeChartOptions"
+            :option="serviceTypeChartOptions"
+            :style="{ height: '350px' }"
+            autoresize
+          />
+        </el-card>
+      </el-col>
+    </el-row>
+
+    <!-- Charts Row 2: Medicine -->
+    <el-row :gutter="16" class="mb-4">
+      <el-col :xs="24" :lg="12">
+        <el-card v-loading="loading">
+          <template #header>
+            <div class="card-header">
+              <span class="font-semibold">Chi phí nhập thuốc theo ngày</span>
+            </div>
+          </template>
+          <v-chart
+            v-if="importCostChartOptions"
+            :option="importCostChartOptions"
+            :style="{ height: '300px' }"
+            autoresize
+          />
+        </el-card>
+      </el-col>
+      <el-col :xs="24" :lg="12">
+        <el-card v-loading="loading">
+          <template #header>
+            <div class="card-header">
+              <span class="font-semibold">Top thuốc xuất nhiều nhất</span>
+            </div>
+          </template>
+          <v-chart
+            v-if="topMedicinesChartOptions"
+            :option="topMedicinesChartOptions"
+            :style="{ height: '300px' }"
+            autoresize
+          />
+        </el-card>
+      </el-col>
+    </el-row>
+
+    <!-- Detail Summary -->
+    <el-card v-loading="loading">
+      <template #header>
+        <div class="card-header">
+          <span class="font-semibold">Chi tiết tài chính</span>
+        </div>
+      </template>
+      <el-descriptions :column="2" border>
+        <el-descriptions-item label="Doanh thu gốc">
+          {{ formatCurrency(summary.grossRevenue) }}
+        </el-descriptions-item>
+        <el-descriptions-item label="Giảm giá">
+          {{ formatCurrency(summary.discountAmount) }}
+        </el-descriptions-item>
+        <el-descriptions-item label="Doanh thu thuần">
+          <span class="text-green-600 font-semibold">
+            {{ formatCurrency(summary.netRevenue) }}
+          </span>
+        </el-descriptions-item>
+        <el-descriptions-item label="Đã thanh toán">
+          {{ formatCurrency(summary.paidAmount) }}
+        </el-descriptions-item>
+        <el-descriptions-item label="Chi phí vận hành">
+          {{ formatCurrency(summary.operatingExpenses) }}
+        </el-descriptions-item>
+        <el-descriptions-item label="Chi phí nhập thuốc">
+          {{ formatCurrency(summary.medicineImportCost) }}
+        </el-descriptions-item>
+        <el-descriptions-item label="Tổng chi phí">
+          <span class="text-red-600 font-semibold">
+            {{ formatCurrency(summary.totalCosts) }}
+          </span>
+        </el-descriptions-item>
+        <el-descriptions-item label="Lợi nhuận ước tính">
+          <span class="text-blue-600 font-semibold text-lg">
+            {{ formatCurrency(summary.estimatedProfit) }}
+          </span>
+        </el-descriptions-item>
+      </el-descriptions>
+    </el-card>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
-import { useRouter } from "vue-router";
-import { Clock, ArrowRight } from "@element-plus/icons-vue";
-import StatCard from "@/components/StatCard.vue";
-import { formatDateTime } from "@/utils/date";
-import type { Patient, Appointment } from "@/types";
+import { ref, computed, onMounted } from "vue";
+import { ElMessage } from "element-plus";
+import {
+  Money,
+  ShoppingCart,
+  TrendCharts,
+  Document,
+} from "@element-plus/icons-vue";
+import VChart from "vue-echarts";
+import { use } from "echarts/core";
+import { CanvasRenderer } from "echarts/renderers";
+import { LineChart, BarChart, PieChart } from "echarts/charts";
+import {
+  TitleComponent,
+  TooltipComponent,
+  LegendComponent,
+  GridComponent,
+} from "echarts/components";
+import { dashboardApi } from "@/api/dashboard";
+import type { DashboardSummary } from "@/types/dashboard";
 
-const router = useRouter();
+// Register ECharts components
+use([
+  CanvasRenderer,
+  LineChart,
+  BarChart,
+  PieChart,
+  TitleComponent,
+  TooltipComponent,
+  LegendComponent,
+  GridComponent,
+]);
 
-const statistics = ref({
-  totalPatients: 156,
-  todayAppointments: 8,
-  activeTreatments: 12,
-  monthlyRevenue: 45000000,
+const loading = ref(false);
+
+// Date range - default to last 30 days
+const dateRange = ref<[string, string]>([
+  new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .split("T")[0] as string,
+  new Date().toISOString().split("T")[0] as string,
+]);
+
+// Summary data
+const summary = ref<DashboardSummary>({
+  grossRevenue: 0,
+  discountAmount: 0,
+  netRevenue: 0,
+  paidAmount: 0,
+  unpaidAmount: 0,
+  operatingExpenses: 0,
+  medicineImportCost: 0,
+  totalCosts: 0,
+  estimatedProfit: 0,
 });
 
-const recentAppointments = ref<Appointment[]>([
-  {
-    id: "1",
-    patientId: "1",
-    patientName: "Nguyễn Văn A",
-    doctorId: "1",
-    appointmentDate: new Date().toISOString(),
-    startTime: "09:00",
-    endTime: "10:00",
-    status: "SCHEDULED",
-    createdAt: new Date().toISOString(),
-  },
-]);
+// Chart data
+const revenueByDay = ref<{ date: string; amount: number }[]>([]);
+const revenueByServiceType = ref<{ category: string; amount: number }[]>([]);
+const importCostByDay = ref<{ date: string; amount: number }[]>([]);
+const topMedicines = ref<{ category: string; amount: number }[]>([]);
 
-const recentPatients = ref<Patient[]>([
-  {
-    id: "1",
-    fullName: "Trần Thị B",
-    dateOfBirth: "1990-01-01",
-    gender: "FEMALE",
-    phone: "0123456789",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-]);
+// Chart options
+const revenueChartOptions = computed(() => {
+  if (revenueByDay.value.length === 0) return null;
 
-const getStatusType = (status: string) => {
-  const map: Record<string, any> = {
-    SCHEDULED: "warning",
-    CONFIRMED: "info",
-    COMPLETED: "success",
-    CANCELLED: "danger",
+  return {
+    tooltip: {
+      trigger: "axis",
+      formatter: (params: any) => {
+        const item = params[0];
+        return `${item.name}<br/>Doanh thu: ${formatCurrency(item.value)}`;
+      },
+    },
+    grid: {
+      left: "3%",
+      right: "4%",
+      bottom: "3%",
+      containLabel: true,
+    },
+    xAxis: {
+      type: "category",
+      data: revenueByDay.value.map((item) =>
+        new Date(item.date).toLocaleDateString("vi-VN", {
+          day: "2-digit",
+          month: "2-digit",
+        }),
+      ),
+    },
+    yAxis: {
+      type: "value",
+      axisLabel: {
+        formatter: (value: number) => `${(value / 1000000).toFixed(0)}M`,
+      },
+    },
+    series: [
+      {
+        name: "Doanh thu",
+        type: "line",
+        data: revenueByDay.value.map((item) => item.amount),
+        smooth: true,
+        lineStyle: {
+          width: 3,
+          color: "#1890ff",
+        },
+        areaStyle: {
+          color: {
+            type: "linear",
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [
+              { offset: 0, color: "rgba(24, 144, 255, 0.3)" },
+              { offset: 1, color: "rgba(24, 144, 255, 0.05)" },
+            ],
+          },
+        },
+      },
+    ],
   };
-  return map[status] || "info";
+});
+
+const serviceTypeChartOptions = computed(() => {
+  if (revenueByServiceType.value.length === 0) return null;
+
+  const typeNames: Record<string, string> = {
+    SERVICE: "Dịch vụ nha khoa",
+    MEDICINE: "Thuốc",
+  };
+
+  return {
+    tooltip: {
+      trigger: "item",
+      formatter: (params: any) => {
+        return `${params.name}<br/>Doanh thu: ${formatCurrency(
+          params.value,
+        )}<br/>Tỷ lệ: ${params.percent}%`;
+      },
+    },
+    legend: {
+      bottom: "5%",
+      left: "center",
+    },
+    series: [
+      {
+        name: "Doanh thu",
+        type: "pie",
+        radius: ["40%", "70%"],
+        avoidLabelOverlap: false,
+        itemStyle: {
+          borderRadius: 10,
+          borderColor: "#fff",
+          borderWidth: 2,
+        },
+        label: {
+          show: false,
+        },
+        emphasis: {
+          label: {
+            show: true,
+            fontSize: 16,
+            fontWeight: "bold",
+          },
+        },
+        data: revenueByServiceType.value.map((item) => ({
+          name: typeNames[item.category] || item.category,
+          value: item.amount,
+        })),
+      },
+    ],
+  };
+});
+
+const importCostChartOptions = computed(() => {
+  if (importCostByDay.value.length === 0) return null;
+
+  return {
+    tooltip: {
+      trigger: "axis",
+      formatter: (params: any) => {
+        const item = params[0];
+        return `${item.name}<br/>Chi phí: ${formatCurrency(item.value)}`;
+      },
+    },
+    grid: {
+      left: "3%",
+      right: "4%",
+      bottom: "3%",
+      containLabel: true,
+    },
+    xAxis: {
+      type: "category",
+      data: importCostByDay.value.map((item) =>
+        new Date(item.date).toLocaleDateString("vi-VN", {
+          day: "2-digit",
+          month: "2-digit",
+        }),
+      ),
+    },
+    yAxis: {
+      type: "value",
+      axisLabel: {
+        formatter: (value: number) => `${(value / 1000000).toFixed(0)}M`,
+      },
+    },
+    series: [
+      {
+        name: "Chi phí nhập",
+        type: "bar",
+        data: importCostByDay.value.map((item) => item.amount),
+        itemStyle: {
+          color: "#ff7875",
+          borderRadius: [4, 4, 0, 0],
+        },
+      },
+    ],
+  };
+});
+
+const topMedicinesChartOptions = computed(() => {
+  if (topMedicines.value.length === 0) return null;
+
+  return {
+    tooltip: {
+      trigger: "axis",
+      axisPointer: {
+        type: "shadow",
+      },
+      formatter: (params: any) => {
+        const item = params[0];
+        return `${item.name}<br/>Số lượng: ${item.value}`;
+      },
+    },
+    grid: {
+      left: "3%",
+      right: "4%",
+      bottom: "3%",
+      containLabel: true,
+    },
+    xAxis: {
+      type: "value",
+    },
+    yAxis: {
+      type: "category",
+      data: topMedicines.value.map((item) => item.category).reverse(),
+    },
+    series: [
+      {
+        name: "Số lượng",
+        type: "bar",
+        data: topMedicines.value.map((item) => item.amount).reverse(),
+        itemStyle: {
+          color: "#52c41a",
+          borderRadius: [0, 4, 4, 0],
+        },
+      },
+    ],
+  };
+});
+
+const formatCurrency = (value: number) => {
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+  }).format(value);
 };
 
-const getStatusText = (status: string) => {
-  const map: Record<string, string> = {
-    SCHEDULED: "Đã lên lịch",
-    CONFIRMED: "Đã xác nhận",
-    COMPLETED: "Hoàn thành",
-    CANCELLED: "Đã hủy",
-  };
-  return map[status] || status;
+const loadData = async () => {
+  if (!dateRange.value || dateRange.value.length !== 2) return;
+
+  loading.value = true;
+  try {
+    const params = {
+      from: dateRange.value[0],
+      to: dateRange.value[1],
+    };
+
+    const [
+      summaryRes,
+      revenueRes,
+      serviceTypeRes,
+      importCostRes,
+      topMedicinesRes,
+    ] = await Promise.all([
+      dashboardApi.summary(params),
+      dashboardApi.revenueByDay(params),
+      dashboardApi.revenueByServiceType(params),
+      dashboardApi.medicineImportCostByDay(params),
+      dashboardApi.topDispensedMedicines(params),
+    ]);
+
+    summary.value = summaryRes;
+    revenueByDay.value = revenueRes;
+    revenueByServiceType.value = serviceTypeRes;
+    importCostByDay.value = importCostRes;
+    topMedicines.value = topMedicinesRes;
+  } catch (error: any) {
+    ElMessage.error(error.message || "Không thể tải dữ liệu dashboard");
+  } finally {
+    loading.value = false;
+  }
 };
 
 onMounted(() => {
-  // Load dashboard data
+  loadData();
 });
 </script>
 
 <style scoped lang="scss">
-.dashboard-view {
-  .dashboard-card {
-    :deep(.el-card__header) {
-      padding: 16px 20px;
+.dashboard-container {
+  padding: 20px;
+
+  .filter-card {
+    margin-bottom: 20px;
+  }
+
+  .stat-card {
+    transition: all 0.3s;
+    cursor: pointer;
+
+    &:hover {
+      transform: translateY(-4px);
     }
 
-    .card-header {
+    .stat-content {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      gap: 16px;
 
-      h3 {
-        margin: 0;
-        font-size: 16px;
-        font-weight: 600;
+      .stat-icon {
+        font-size: 48px;
+        opacity: 0.8;
+      }
+
+      .stat-info {
+        flex: 1;
+
+        .stat-label {
+          font-size: 14px;
+          color: #8c8c8c;
+          margin-bottom: 8px;
+        }
+
+        .stat-value {
+          font-size: 24px;
+          font-weight: 600;
+        }
+      }
+    }
+
+    &.revenue-card {
+      .stat-icon {
+        color: #1890ff;
+      }
+      .stat-value {
+        color: #1890ff;
+      }
+    }
+
+    &.cost-card {
+      .stat-icon {
+        color: #ff7875;
+      }
+      .stat-value {
+        color: #ff7875;
+      }
+    }
+
+    &.profit-card {
+      .stat-icon {
+        color: #52c41a;
+      }
+      .stat-value {
+        color: #52c41a;
+      }
+    }
+
+    &.unpaid-card {
+      .stat-icon {
+        color: #faad14;
+      }
+      .stat-value {
+        color: #faad14;
       }
     }
   }
 
-  .appointment-list,
-  .patient-list {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .appointment-item {
+  .card-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px;
-    background: #fafafa;
-    border-radius: 8px;
-    transition: all 0.3s;
-
-    &:hover {
-      background: #f0f0f0;
-    }
-
-    .appointment-info {
-      flex: 1;
-
-      .patient-name {
-        font-weight: 500;
-        color: #1f1f1f;
-        margin-bottom: 4px;
-      }
-
-      .appointment-time {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        font-size: 13px;
-        color: #8c8c8c;
-      }
-    }
   }
+}
 
-  .patient-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px;
-    background: #fafafa;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.3s;
+.mb-4 {
+  margin-bottom: 16px;
+}
 
-    &:hover {
-      background: #f0f0f0;
-      transform: translateX(4px);
-    }
+.text-right {
+  text-align: right;
+}
 
-    .patient-info {
-      flex: 1;
+.text-xl {
+  font-size: 1.25rem;
+}
 
-      .patient-name {
-        font-weight: 500;
-        color: #1f1f1f;
-        margin-bottom: 4px;
-      }
+.font-semibold {
+  font-weight: 600;
+}
 
-      .patient-phone {
-        font-size: 13px;
-        color: #8c8c8c;
-      }
-    }
-  }
+.text-green-600 {
+  color: #52c41a;
+}
+
+.text-red-600 {
+  color: #ff4d4f;
+}
+
+.text-blue-600 {
+  color: #1890ff;
+}
+
+.text-lg {
+  font-size: 1.125rem;
 }
 </style>

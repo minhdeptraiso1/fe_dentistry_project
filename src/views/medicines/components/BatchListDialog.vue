@@ -35,40 +35,6 @@
           {{ row.quantityIn }}
         </template>
       </el-table-column>
-      <el-table-column label="SL còn" width="100" align="right">
-        <template #default="{ row }">
-          <span
-            :class="{
-              'text-red-600 font-semibold': row.quantityRemaining === 0,
-              'text-orange-600':
-                row.quantityRemaining > 0 && row.quantityRemaining < 10,
-              'text-green-600': row.quantityRemaining >= 10,
-            }"
-          >
-            {{ row.quantityRemaining }}
-          </span>
-        </template>
-      </el-table-column>
-      <el-table-column label="Trạng thái" width="120" align="center">
-        <template #default="{ row }">
-          <el-tag v-if="row.quantityRemaining === 0" type="info">
-            Hết hàng
-          </el-tag>
-          <el-tag
-            v-else-if="row.expiryDate && isExpired(row.expiryDate)"
-            type="danger"
-          >
-            Đã hết hạn
-          </el-tag>
-          <el-tag
-            v-else-if="row.expiryDate && isExpiringSoon(row.expiryDate)"
-            type="warning"
-          >
-            Sắp hết hạn
-          </el-tag>
-          <el-tag v-else type="success">Khả dụng</el-tag>
-        </template>
-      </el-table-column>
     </el-table>
 
     <!-- Pagination -->
@@ -91,8 +57,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from "vue";
+import { ref, reactive, computed, watch } from "vue";
 import { ElMessage } from "element-plus";
+import { medicineApi } from "@/api/medicine";
 import type { Medicine, MedicineBatch } from "@/types/medicine";
 
 interface Props {
@@ -126,11 +93,12 @@ const loadBatches = async () => {
 
   try {
     loading.value = true;
-    // TODO: Backend doesn't have GET /medicines/{id}/batches endpoint yet
-    // For now, show empty list with a message
-    batches.value = [];
-    pagination.total = 0;
-    ElMessage.warning("Chức năng xem lịch sử lô đang được phát triển");
+    const response = await medicineApi.batchHistory(props.medicine.id, {
+      page: pagination.page - 1, // Backend uses 0-based index
+      size: pagination.size,
+    });
+    batches.value = response.content || [];
+    pagination.total = response.totalElements || 0;
   } catch (error) {
     console.error("Failed to load batches:", error);
     ElMessage.error("Không thể tải lịch sử lô");
@@ -170,7 +138,14 @@ const getExpiryClass = (expiryDate: string) => {
   return "";
 };
 
-onMounted(() => {
-  loadBatches();
-});
+// Watch for medicine changes and dialog visibility
+watch(
+  () => [props.modelValue, props.medicine],
+  ([isVisible, medicine]) => {
+    if (isVisible && medicine) {
+      loadBatches();
+    }
+  },
+  { immediate: true },
+);
 </script>
