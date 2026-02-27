@@ -114,6 +114,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: "Báo cáo tồn kho" },
       },
       {
+        path: "/expenses",
+        name: "Expenses",
+        component: () => import("@/views/expenses/ExpenseListView.vue"),
+        meta: { title: "Quản lý chi phí", requiresAdmin: true },
+      },
+      {
         path: "/profile",
         name: "Profile",
         component: () => import("@/views/profile/ProfileView.vue"),
