@@ -3,8 +3,10 @@ import axios, {
   type AxiosResponse,
   type AxiosError,
   type AxiosRequestConfig,
+  type InternalAxiosRequestConfig,
 } from "axios";
-import { ElNotification } from "element-plus";
+import { ElNotification, ElMessageBox } from "element-plus";
+import { tokenStorage } from "./storage";
 
 // Create axios instance
 const service: AxiosInstance = axios.create({
@@ -14,6 +16,129 @@ const service: AxiosInstance = axios.create({
     "Content-Type": "application/json",
   },
 });
+
+// Flag để tránh multiple refresh calls
+let isRefreshing = false;
+let failedQueue: Array<{
+  resolve: (value?: any) => void;
+  reject: (reason?: any) => void;
+}> = [];
+
+// Process queued requests after token refresh
+const processQueue = (error: Error | null, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
+// Refresh token and retry request
+const refreshTokenAndRetry = async (
+  originalRequest: InternalAxiosRequestConfig,
+): Promise<any> => {
+  if (isRefreshing) {
+    // Nếu đang refresh, đợi trong queue
+    return new Promise((resolve, reject) => {
+      failedQueue.push({ resolve, reject });
+    })
+      .then((token) => {
+        if (originalRequest.headers) {
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+        }
+        return service(originalRequest);
+      })
+      .catch((err) => {
+        return Promise.reject(err);
+      });
+  }
+
+  isRefreshing = true;
+  const refreshToken = tokenStorage.getRefreshToken();
+
+  if (!refreshToken) {
+    // Không có refresh token, logout
+    isRefreshing = false;
+    processQueue(new Error("No refresh token"), null);
+    clearAuthAndRedirect();
+    return Promise.reject(new Error("No refresh token"));
+  }
+
+  try {
+    // Gọi API refresh token với refreshToken là query parameter
+    const response = await axios.post(
+      `${import.meta.env.VITE_API_BASE_URL || "http://localhost:8080"}/auth/refresh?refreshToken=${encodeURIComponent(refreshToken)}`,
+    );
+
+    const newAccessToken = response.data?.data?.accessToken;
+    const newRefreshToken = response.data?.data?.refreshToken;
+
+    if (newAccessToken) {
+      // Lưu token mới
+      tokenStorage.setAccessToken(newAccessToken);
+      if (newRefreshToken) {
+        tokenStorage.setRefreshToken(newRefreshToken);
+      }
+
+      // Process queue với token mới
+      processQueue(null, newAccessToken);
+
+      // Retry request ban đầu với token mới
+      if (originalRequest.headers) {
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+      }
+      isRefreshing = false;
+      return service(originalRequest);
+    } else {
+      throw new Error("No access token in refresh response");
+    }
+  } catch (error) {
+    // Refresh token hết hạn hoặc không hợp lệ
+    processQueue(error as Error, null);
+    isRefreshing = false;
+    clearAuthAndRedirect();
+    return Promise.reject(error);
+  }
+};
+
+// Clear auth and redirect to login
+const clearAuthAndRedirect = async () => {
+  // Lưu đường dẫn hiện tại để redirect sau khi login lại
+  const currentPath = window.location.pathname + window.location.search;
+
+  tokenStorage.clearTokens();
+  tokenStorage.clearUser();
+
+  try {
+    // Hiển thị dialog xác nhận
+    await ElMessageBox.confirm(
+      "Phiên đăng nhập của bạn đã hết hạn. Vui lòng đăng nhập lại để tiếp tục.",
+      "Phiên đăng nhập hết hạn",
+      {
+        confirmButtonText: "Đăng nhập",
+        cancelButtonText: "Hủy",
+        showCancelButton: false,
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
+        center: true,
+        customClass: "modern-session-dialog",
+        confirmButtonClass: "modern-session-confirm-button",
+      },
+    );
+  } catch {
+    // Nếu user cancel hoặc đóng dialog, vẫn redirect
+  }
+
+  // Redirect về login với query parameter để quay lại trang cũ
+  const loginUrl =
+    currentPath && currentPath !== "/login"
+      ? `/login?redirect=${encodeURIComponent(currentPath)}`
+      : "/login";
+  window.location.href = loginUrl;
+};
 
 // Request interceptor
 service.interceptors.request.use(
@@ -30,7 +155,6 @@ service.interceptors.request.use(
     return config;
   },
   (error: AxiosError) => {
-    console.error("Request error:", error);
     return Promise.reject(error);
   },
 );
@@ -56,36 +180,43 @@ service.interceptors.response.use(
     // Return the actual data (unwrap ApiResponse wrapper)
     return res.data;
   },
-  (error: AxiosError) => {
-    console.error("Response error:", error);
+  async (error: AxiosError) => {
+    const originalRequest = error.config as InternalAxiosRequestConfig & {
+      _retry?: boolean;
+    };
 
     if (error.response) {
       const { status } = error.response;
 
+      // Xử lý 401 và 403 - Token hết hạn hoặc không hợp lệ
+      // Backend trả về 403 khi access token hết hạn
+      if (
+        (status === 401 || status === 403) &&
+        originalRequest &&
+        !originalRequest._retry
+      ) {
+        // Đánh dấu request đã retry để tránh infinite loop
+        originalRequest._retry = true;
+
+        // Không refresh nếu đang gọi API refresh hoặc login
+        if (
+          originalRequest.url?.includes("/auth/refresh") ||
+          originalRequest.url?.includes("/auth/login")
+        ) {
+          clearAuthAndRedirect();
+          return Promise.reject(error);
+        }
+
+        // Thử refresh token và retry request
+        try {
+          return await refreshTokenAndRetry(originalRequest);
+        } catch (refreshError) {
+          return Promise.reject(refreshError);
+        }
+      }
+
+      // Các lỗi khác
       switch (status) {
-        case 401:
-          // Unauthorized - redirect to login
-          // Clear cookies
-          document.cookie =
-            "access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-          document.cookie =
-            "refresh_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-          ElNotification({
-            title: "Phiên đăng nhập hết hạn",
-            message: "Vui lòng đăng nhập lại",
-            type: "warning",
-            position: "top-right",
-          });
-          window.location.href = "/login";
-          break;
-        case 403:
-          ElNotification({
-            title: "Từ chối truy cập",
-            message: "Bạn không có quyền truy cập",
-            type: "error",
-            position: "top-right",
-          });
-          break;
         case 404:
           ElNotification({
             title: "Không tìm thấy",
@@ -103,12 +234,15 @@ service.interceptors.response.use(
           });
           break;
         default:
-          ElNotification({
-            title: "Lỗi",
-            message: error.message || "Có lỗi xảy ra",
-            type: "error",
-            position: "top-right",
-          });
+          if (status !== 401 && status !== 403) {
+            // Đã xử lý 401 và 403 ở trên
+            ElNotification({
+              title: "Lỗi",
+              message: error.message || "Có lỗi xảy ra",
+              type: "error",
+              position: "top-right",
+            });
+          }
       }
     } else {
       ElNotification({

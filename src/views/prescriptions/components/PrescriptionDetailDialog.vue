@@ -1,10 +1,17 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="Chi tiết đơn thuốc"
     width="90%"
+    :show-close="false"
     @close="handleClose"
+    class="prescription-detail-dialog"
   >
+    <template #header>
+      <div class="dialog-header">
+        <component :is="DetailIcon" class="header-icon" />
+        <span class="header-title">Chi tiết đơn thuốc</span>
+      </div>
+    </template>
     <div v-loading="loading" v-if="prescriptionDetail">
       <!-- Prescription Info -->
       <el-descriptions :column="3" border class="mb-4">
@@ -69,68 +76,202 @@
       </div>
 
       <!-- Action Buttons -->
-      <div class="flex justify-end gap-2">
-        <el-button
+      <div class="action-buttons">
+        <button
           v-if="
             prescriptionDetail.status === 'DRAFT' &&
             (authStore.isDoctor || authStore.isAdmin)
           "
-          type="primary"
+          class="action-button primary-button"
           @click="handleIssue"
         >
-          Phát hành
-        </el-button>
-        <el-button
+          <component :is="SendIcon" />
+          <span>Phát hành</span>
+        </button>
+        <button
           v-if="
             prescriptionDetail.status === 'ISSUED' &&
             (authStore.isCashier || authStore.isAdmin)
           "
-          type="success"
+          class="action-button success-button"
           @click="handleDispense"
         >
-          <el-icon class="mr-1"><Check /></el-icon>
-          Xuất thuốc
-        </el-button>
-        <el-button
+          <component :is="CheckIcon" />
+          <span>Xuất thuốc</span>
+        </button>
+        <button
           v-if="
             prescriptionDetail.status === 'DISPENSED' &&
             (authStore.isCashier || authStore.isAdmin)
           "
-          type="primary"
+          class="action-button info-button"
           @click="handleCreateInvoice"
         >
-          <el-icon class="mr-1"><Document /></el-icon>
-          Tạo hóa đơn
-        </el-button>
-        <el-button
+          <component :is="DocumentIcon" />
+          <span>Tạo hóa đơn</span>
+        </button>
+        <button
           v-if="
             prescriptionDetail.status !== 'DISPENSED' &&
             prescriptionDetail.status !== 'CANCELLED' &&
             (authStore.isDoctor || authStore.isAdmin)
           "
-          type="danger"
+          class="action-button danger-button"
           @click="handleCancel"
         >
-          <el-icon class="mr-1"><Close /></el-icon>
-          Hủy đơn
-        </el-button>
+          <component :is="XCircleIcon" />
+          <span>Hủy đơn</span>
+        </button>
       </div>
     </div>
 
     <template #footer>
-      <el-button @click="handleClose">Đóng</el-button>
+      <div class="dialog-footer">
+        <button @click="handleClose" class="footer-button close-button">
+          <component :is="CloseIcon" />
+          <span>Đóng</span>
+        </button>
+      </div>
     </template>
   </el-dialog>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, h } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { Check, Close, Document } from "@element-plus/icons-vue";
 import { prescriptionApi } from "@/api/prescription";
 import { invoiceApi } from "@/api/invoice";
 import { useAuthStore } from "@/stores/auth";
 import type { Prescription, PrescriptionStatus } from "@/types/prescription";
+
+const DetailIcon = () =>
+  h(
+    "svg",
+    {
+      xmlns: "http://www.w3.org/2000/svg",
+      width: "24",
+      height: "24",
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": "2",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+    },
+    [
+      h("path", {
+        d: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z",
+      }),
+      h("polyline", { points: "14 2 14 8 20 8" }),
+      h("line", { x1: "16", y1: "13", x2: "8", y2: "13" }),
+      h("line", { x1: "16", y1: "17", x2: "8", y2: "17" }),
+      h("polyline", { points: "10 9 9 9 8 9" }),
+    ],
+  );
+
+const SendIcon = () =>
+  h(
+    "svg",
+    {
+      xmlns: "http://www.w3.org/2000/svg",
+      width: "16",
+      height: "16",
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": "2",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+    },
+    [
+      h("path", { d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" }),
+      h("polyline", { points: "17 8 12 3 7 8" }),
+      h("line", { x1: "12", y1: "3", x2: "12", y2: "15" }),
+    ],
+  );
+
+const CheckIcon = () =>
+  h(
+    "svg",
+    {
+      xmlns: "http://www.w3.org/2000/svg",
+      width: "16",
+      height: "16",
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": "2",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+    },
+    [h("polyline", { points: "20 6 9 17 4 12" })],
+  );
+
+const DocumentIcon = () =>
+  h(
+    "svg",
+    {
+      xmlns: "http://www.w3.org/2000/svg",
+      width: "16",
+      height: "16",
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": "2",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+    },
+    [
+      h("path", {
+        d: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z",
+      }),
+      h("polyline", { points: "14 2 14 8 20 8" }),
+      h("line", { x1: "16", y1: "13", x2: "8", y2: "13" }),
+      h("line", { x1: "16", y1: "17", x2: "8", y2: "17" }),
+      h("line", { x1: "10", y1: "9", x2: "8", y2: "9" }),
+    ],
+  );
+
+const XCircleIcon = () =>
+  h(
+    "svg",
+    {
+      xmlns: "http://www.w3.org/2000/svg",
+      width: "16",
+      height: "16",
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": "2",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+    },
+    [
+      h("circle", { cx: "12", cy: "12", r: "10" }),
+      h("line", { x1: "15", y1: "9", x2: "9", y2: "15" }),
+      h("line", { x1: "9", y1: "9", x2: "15", y2: "15" }),
+    ],
+  );
+
+const CloseIcon = () =>
+  h(
+    "svg",
+    {
+      xmlns: "http://www.w3.org/2000/svg",
+      width: "20",
+      height: "20",
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": "2",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+    },
+    [
+      h("line", { x1: "18", y1: "6", x2: "6", y2: "18" }),
+      h("line", { x1: "6", y1: "6", x2: "18", y2: "18" }),
+    ],
+  );
 
 interface Props {
   modelValue: boolean;
@@ -279,6 +420,8 @@ const handleCancel = async () => {
         cancelButtonText: "Đóng",
         inputPlaceholder: "Nhập lý do hủy (tùy chọn)",
         inputType: "textarea",
+        type: "error",
+        customClass: "danger-confirm-dialog",
       },
     );
 
@@ -326,3 +469,145 @@ const formatDateTime = (dateString: string) => {
   return new Date(dateString).toLocaleString("vi-VN");
 };
 </script>
+
+<style scoped lang="scss">
+.prescription-detail-dialog {
+  :deep(.el-dialog__header) {
+    padding: 0;
+    margin: 0;
+  }
+
+  :deep(.el-dialog__body) {
+    padding: 20px;
+  }
+
+  :deep(.el-dialog__footer) {
+    padding: 0;
+  }
+
+  .dialog-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+    color: white;
+
+    .header-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      flex-shrink: 0;
+    }
+
+    .header-title {
+      font-size: 16px;
+      font-weight: 600;
+      line-height: 1;
+    }
+  }
+
+  .action-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 16px;
+
+    .action-button {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      outline: none;
+      color: white;
+
+      &:hover {
+        transform: translateY(-1px);
+      }
+
+      &:active {
+        transform: translateY(0);
+      }
+
+      &.primary-button {
+        background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+        box-shadow: 0 2px 4px rgba(20, 184, 166, 0.2);
+
+        &:hover {
+          box-shadow: 0 4px 8px rgba(20, 184, 166, 0.3);
+        }
+      }
+
+      &.success-button {
+        background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+        box-shadow: 0 2px 4px rgba(34, 197, 94, 0.2);
+
+        &:hover {
+          box-shadow: 0 4px 8px rgba(34, 197, 94, 0.3);
+        }
+      }
+
+      &.info-button {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+
+        &:hover {
+          box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+        }
+      }
+
+      &.danger-button {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+
+        &:hover {
+          box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+        }
+      }
+    }
+  }
+
+  .dialog-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: 12px 16px;
+    border-top: 1px solid #e5e7eb;
+
+    .footer-button {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      outline: none;
+
+      &.close-button {
+        background: white;
+        color: #6b7280;
+        border: 1px solid #d1d5db;
+
+        &:hover {
+          background: #f9fafb;
+          color: #374151;
+          border-color: #9ca3af;
+        }
+      }
+    }
+  }
+}
+</style>

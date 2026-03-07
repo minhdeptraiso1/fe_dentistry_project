@@ -1,38 +1,43 @@
 <template>
   <div class="expense-list-view">
     <!-- Page Header -->
-    <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-bold">Quản lý chi phí</h1>
-      <el-button type="primary" @click="handleCreate">
-        <el-icon class="mr-1"><Plus /></el-icon>
-        Thêm chi phí
-      </el-button>
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Quản lý chi phí</h1>
+        <p class="page-subtitle">Quản lý và theo dõi các khoản chi phí</p>
+      </div>
+      <button @click="handleCreate" class="add-button">
+        <component :is="PlusIcon" />
+        <span>Thêm chi phí</span>
+      </button>
     </div>
 
-    <!-- Filter Card -->
-    <el-card class="mb-4">
-      <el-form :inline="true" :model="filterForm">
-        <el-form-item label="Tìm kiếm">
+    <!-- Search Card -->
+    <div class="search-card">
+      <div class="search-header">
+        <component :is="SearchIcon" class="search-header-icon" />
+        <span class="search-header-text">Tìm kiếm chi phí</span>
+      </div>
+      <div class="search-content">
+        <div class="search-row">
           <el-input
             v-model="filterForm.keyword"
             placeholder="Tên chi phí..."
             clearable
-            style="width: 250px"
+            class="search-input"
             @clear="handleSearch"
             @keyup.enter="handleSearch"
           >
             <template #prefix>
-              <el-icon><Search /></el-icon>
+              <component :is="SearchIcon" style="width: 16px; height: 16px" />
             </template>
           </el-input>
-        </el-form-item>
 
-        <el-form-item label="Danh mục">
           <el-select
             v-model="filterForm.category"
-            placeholder="Tất cả"
+            placeholder="Tất cả danh mục"
             clearable
-            style="width: 150px"
+            class="search-select"
             @change="handleSearch"
           >
             <el-option
@@ -42,76 +47,90 @@
               :value="key"
             />
           </el-select>
-        </el-form-item>
 
-        <el-form-item label="Từ ngày">
           <el-date-picker
             v-model="filterForm.fromDate"
             type="date"
-            placeholder="Chọn ngày"
+            placeholder="Từ ngày"
             format="DD/MM/YYYY"
             value-format="YYYY-MM-DD"
-            style="width: 150px"
+            class="search-date"
             @change="handleSearch"
           />
-        </el-form-item>
 
-        <el-form-item label="Đến ngày">
           <el-date-picker
             v-model="filterForm.toDate"
             type="date"
-            placeholder="Chọn ngày"
+            placeholder="Đến ngày"
             format="DD/MM/YYYY"
             value-format="YYYY-MM-DD"
-            style="width: 150px"
+            class="search-date"
             @change="handleSearch"
           />
-        </el-form-item>
+        </div>
 
-        <el-form-item>
-          <el-button type="primary" @click="handleSearch">
-            <el-icon class="mr-1"><Search /></el-icon>
-            Tìm kiếm
-          </el-button>
-          <el-button @click="handleReset">Đặt lại</el-button>
-        </el-form-item>
-      </el-form>
-    </el-card>
+        <div class="search-actions">
+          <button @click="handleSearch" class="search-button primary">
+            <component :is="SearchIcon" />
+            <span>Tìm kiếm</span>
+          </button>
+          <button @click="handleReset" class="search-button secondary">
+            <component :is="RefreshIcon" />
+            <span>Đặt lại</span>
+          </button>
+        </div>
+      </div>
+    </div>
 
     <!-- Summary Card -->
-    <el-card class="mb-4">
-      <el-row :gutter="16">
-        <el-col :span="8">
-          <el-statistic title="Tổng chi phí" :value="totalAmount">
-            <template #suffix>đ</template>
-          </el-statistic>
-        </el-col>
-        <el-col :span="8">
-          <el-statistic title="Số bản ghi" :value="pagination.total" />
-        </el-col>
-        <el-col :span="8">
-          <el-button type="success" @click="handleExport" :loading="exporting">
-            <el-icon class="mr-1"><Download /></el-icon>
-            Xuất Excel
-          </el-button>
-        </el-col>
-      </el-row>
-    </el-card>
+    <div class="summary-card">
+      <div class="summary-item">
+        <div class="summary-icon money">
+          <component :is="MoneyIcon" />
+        </div>
+        <div class="summary-content">
+          <div class="summary-label">Tổng chi phí</div>
+          <div class="summary-value">{{ formatCurrency(totalAmount) }}</div>
+        </div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-icon records">
+          <component :is="FileTextIcon" />
+        </div>
+        <div class="summary-content">
+          <div class="summary-label">Số bản ghi</div>
+          <div class="summary-value">{{ pagination.total }}</div>
+        </div>
+      </div>
+      <div class="summary-item">
+        <button
+          @click="handleExport"
+          :disabled="exporting"
+          class="export-button"
+        >
+          <component :is="DownloadIcon" />
+          <span>{{ exporting ? "Đang xuất..." : "Xuất Excel" }}</span>
+        </button>
+      </div>
+    </div>
 
     <!-- Table Card -->
-    <el-card>
+    <div class="table-card">
       <el-table
         v-loading="loading"
         :data="expenses"
-        border
         stripe
-        style="width: 100%"
+        class="modern-table"
       >
-        <el-table-column type="index" label="STT" width="60" />
+        <el-table-column type="index" label="STT" width="60" align="center" />
         <el-table-column prop="expenseCode" label="Mã chi phí" width="130" />
-        <el-table-column label="Danh mục" width="120">
+        <el-table-column label="Danh mục" width="150">
           <template #default="{ row }">
-            <el-tag :type="getCategoryTagType(row.category)">
+            <el-tag
+              :type="getCategoryTagType(row.category)"
+              effect="dark"
+              size="small"
+            >
               {{ ExpenseCategoryLabels[row.category as ExpenseCategory] }}
             </el-tag>
           </template>
@@ -155,16 +174,18 @@
             <el-button
               type="primary"
               size="small"
-              link
+              :icon="EditIcon"
               @click="handleEdit(row)"
+              class="action-button edit-button"
             >
               Sửa
             </el-button>
             <el-button
               type="danger"
               size="small"
-              link
+              :icon="TrashIcon"
               @click="handleDelete(row)"
+              class="action-button delete-button"
             >
               Xóa
             </el-button>
@@ -173,7 +194,7 @@
       </el-table>
 
       <!-- Pagination -->
-      <div class="flex justify-end mt-4">
+      <div class="pagination-container">
         <el-pagination
           v-model:current-page="pagination.page"
           v-model:page-size="pagination.size"
@@ -184,7 +205,7 @@
           @current-change="handleSearch"
         />
       </div>
-    </el-card>
+    </div>
 
     <!-- Expense Form Dialog -->
     <ExpenseFormDialog
@@ -196,9 +217,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from "vue";
+import { ref, reactive, computed, onMounted, h } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { Plus, Search, Download } from "@element-plus/icons-vue";
 import { expenseApi } from "@/api/expense";
 import {
   type Expense,
@@ -206,6 +226,170 @@ import {
   ExpenseCategoryLabels,
 } from "@/types/expense";
 import ExpenseFormDialog from "./components/ExpenseFormDialog.vue";
+
+// Custom Icons
+const PlusIcon = () =>
+  h(
+    "svg",
+    {
+      xmlns: "http://www.w3.org/2000/svg",
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": "2",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      style: "width: 20px; height: 20px;",
+    },
+    [
+      h("line", { x1: "12", y1: "5", x2: "12", y2: "19" }),
+      h("line", { x1: "5", y1: "12", x2: "19", y2: "12" }),
+    ],
+  );
+
+const SearchIcon = () =>
+  h(
+    "svg",
+    {
+      xmlns: "http://www.w3.org/2000/svg",
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": "2",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      style: "width: 20px; height: 20px;",
+    },
+    [
+      h("circle", { cx: "11", cy: "11", r: "8" }),
+      h("path", { d: "m21 21-4.35-4.35" }),
+    ],
+  );
+
+const RefreshIcon = () =>
+  h(
+    "svg",
+    {
+      xmlns: "http://www.w3.org/2000/svg",
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": "2",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      style: "width: 18px; height: 18px;",
+    },
+    [
+      h("path", { d: "M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" }),
+      h("path", { d: "M21 3v5h-5" }),
+      h("path", { d: "M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" }),
+      h("path", { d: "M3 21v-5h5" }),
+    ],
+  );
+
+const MoneyIcon = () =>
+  h(
+    "svg",
+    {
+      xmlns: "http://www.w3.org/2000/svg",
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": "2",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      style: "width: 24px; height: 24px;",
+    },
+    [
+      h("line", { x1: "12", y1: "1", x2: "12", y2: "23" }),
+      h("path", { d: "M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" }),
+    ],
+  );
+
+const FileTextIcon = () =>
+  h(
+    "svg",
+    {
+      xmlns: "http://www.w3.org/2000/svg",
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": "2",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      style: "width: 24px; height: 24px;",
+    },
+    [
+      h("path", {
+        d: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z",
+      }),
+      h("polyline", { points: "14 2 14 8 20 8" }),
+      h("line", { x1: "16", y1: "13", x2: "8", y2: "13" }),
+      h("line", { x1: "16", y1: "17", x2: "8", y2: "17" }),
+      h("polyline", { points: "10 9 9 9 8 9" }),
+    ],
+  );
+
+const DownloadIcon = () =>
+  h(
+    "svg",
+    {
+      xmlns: "http://www.w3.org/2000/svg",
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": "2",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      style: "width: 18px; height: 18px;",
+    },
+    [
+      h("path", { d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" }),
+      h("polyline", { points: "7 10 12 15 17 10" }),
+      h("line", { x1: "12", y1: "15", x2: "12", y2: "3" }),
+    ],
+  );
+
+const EditIcon = () =>
+  h(
+    "svg",
+    {
+      xmlns: "http://www.w3.org/2000/svg",
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": "2",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      style: "width: 16px; height: 16px;",
+    },
+    [
+      h("path", {
+        d: "M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z",
+      }),
+    ],
+  );
+
+const TrashIcon = () =>
+  h(
+    "svg",
+    {
+      xmlns: "http://www.w3.org/2000/svg",
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": "2",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      style: "width: 16px; height: 16px;",
+    },
+    [
+      h("polyline", { points: "3 6 5 6 21 6" }),
+      h("path", {
+        d: "M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2",
+      }),
+    ],
+  );
 
 const loading = ref(false);
 const exporting = ref(false);
@@ -312,7 +496,7 @@ const handleDelete = async (expense: Expense) => {
       {
         confirmButtonText: "Xóa",
         cancelButtonText: "Hủy",
-        type: "warning",
+        customClass: "danger-confirm-dialog",
       },
     );
 
@@ -343,54 +527,338 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .expense-list-view {
-  padding: 20px;
+  padding: 24px;
+  max-width: 1600px;
+  margin: 0 auto;
 }
 
-.flex {
+// Page Header
+.page-header {
   display: flex;
-}
-
-.justify-between {
   justify-content: space-between;
-}
-
-.justify-end {
-  justify-content: flex-end;
-}
-
-.items-center {
   align-items: center;
+  margin-bottom: 24px;
+  padding: 24px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.mb-4 {
+.page-title {
+  font-size: 28px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0 0 4px 0;
+}
+
+.page-subtitle {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.add-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 28px;
+  background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(20, 184, 166, 0.3);
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(20, 184, 166, 0.4);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+// Search Card
+.search-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+
+.search-header {
+  background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.search-header-icon {
+  width: 20px;
+  height: 20px;
+  color: white;
+}
+
+.search-header-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
+}
+
+.search-content {
+  padding: 24px;
+}
+
+.search-row {
+  display: grid;
+  grid-template-columns: 2fr 1.5fr 1fr 1fr;
+  gap: 16px;
   margin-bottom: 16px;
 }
 
-.mb-6 {
+.search-input {
+  :deep(.el-input__wrapper) {
+    border-radius: 8px;
+  }
+}
+
+.search-select,
+.search-date {
+  :deep(.el-input__wrapper) {
+    border-radius: 8px;
+  }
+}
+
+.search-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.search-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  &.primary {
+    background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(20, 184, 166, 0.3);
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(20, 184, 166, 0.4);
+    }
+  }
+
+  &.secondary {
+    background: #f3f4f6;
+    color: #374151;
+
+    &:hover {
+      background: #e5e7eb;
+    }
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+// Summary Card
+.summary-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 24px;
   margin-bottom: 24px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
 }
 
-.mt-4 {
-  margin-top: 16px;
+.summary-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+
+  &:last-child {
+    justify-content: flex-end;
+  }
 }
 
-.mr-1 {
-  margin-right: 4px;
+.summary-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  &.money {
+    background: linear-gradient(135deg, #ef4444 15%, #dc2626 100%);
+    color: white;
+  }
+
+  &.records {
+    background: linear-gradient(135deg, #3b82f6 15%, #2563eb 100%);
+    color: white;
+  }
+
+  svg {
+    width: 28px;
+    height: 28px;
+  }
 }
 
-.text-2xl {
-  font-size: 1.5rem;
+.summary-content {
+  flex: 1;
 }
 
-.font-bold {
+.summary-label {
+  font-size: 13px;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.summary-value {
+  font-size: 24px;
   font-weight: 700;
+  color: #111827;
 }
 
-.font-semibold {
-  font-weight: 600;
+.export-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 }
 
-.text-red-600 {
-  color: #ff4d4f;
+// Table Card
+.table-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.modern-table {
+  :deep(.el-table__header) {
+    th {
+      background: #f9fafb;
+      color: #374151;
+      font-weight: 600;
+      font-size: 13px;
+      padding: 14px 0;
+    }
+  }
+
+  :deep(.el-table__body) {
+    td {
+      padding: 14px 0;
+      font-size: 14px;
+    }
+  }
+
+  :deep(.el-table__row) {
+    &:hover {
+      background: #f9fafb;
+    }
+  }
+
+  :deep(.el-button.action-button) {
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    border: none;
+    margin: 0 4px;
+
+    &.edit-button {
+      background: #eff6ff;
+      color: #3b82f6;
+
+      &:hover {
+        background: #dbeafe;
+        transform: translateY(-1px);
+      }
+    }
+
+    &.delete-button {
+      background: #fef2f2;
+      color: #ef4444;
+
+      &:hover {
+        background: #fee2e2;
+        transform: translateY(-1px);
+      }
+    }
+  }
+
+  :deep(.el-tag) {
+    font-weight: 500;
+  }
+}
+
+// Pagination
+.pagination-container {
+  padding: 20px 24px;
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px solid #f3f4f6;
 }
 </style>

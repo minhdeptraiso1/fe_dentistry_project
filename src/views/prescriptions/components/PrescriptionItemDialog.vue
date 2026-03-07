@@ -1,11 +1,18 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="Thêm thuốc"
     width="600px"
+    :show-close="false"
     :close-on-click-modal="false"
     @close="handleClose"
+    class="prescription-item-dialog"
   >
+    <template #header>
+      <div class="dialog-header">
+        <component :is="MedicineIcon" class="header-icon" />
+        <span class="header-title">Thêm thuốc</span>
+      </div>
+    </template>
     <el-form
       ref="formRef"
       :model="form"
@@ -101,19 +108,88 @@
     </el-form>
 
     <template #footer>
-      <el-button @click="handleClose">Hủy</el-button>
-      <el-button type="primary" @click="handleConfirm"> Thêm </el-button>
+      <div class="dialog-footer">
+        <button @click="handleClose" class="footer-button cancel-button">
+          <component :is="XIcon" />
+          <span>Hủy</span>
+        </button>
+        <button @click="handleConfirm" class="footer-button submit-button">
+          <component :is="CheckIcon" />
+          <span>Thêm</span>
+        </button>
+      </div>
     </template>
   </el-dialog>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from "vue";
+import { ref, reactive, computed, h } from "vue";
 import { ElMessage } from "element-plus";
 import { medicineApi } from "@/api/medicine";
 import type { Medicine } from "@/types/medicine";
 import type { CreatePrescriptionItemRequest } from "@/types/prescription";
 import type { FormInstance, FormRules } from "element-plus";
+
+const MedicineIcon = () =>
+  h(
+    "svg",
+    {
+      xmlns: "http://www.w3.org/2000/svg",
+      width: "24",
+      height: "24",
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": "2",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+    },
+    [
+      h("rect", { x: "3", y: "8", width: "18", height: "4", rx: "1" }),
+      h("path", { d: "M12 8v13" }),
+      h("path", { d: "M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7" }),
+      h("path", {
+        d: "M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5",
+      }),
+    ],
+  );
+
+const CheckIcon = () =>
+  h(
+    "svg",
+    {
+      xmlns: "http://www.w3.org/2000/svg",
+      width: "20",
+      height: "20",
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": "2",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+    },
+    [h("polyline", { points: "20 6 9 17 4 12" })],
+  );
+
+const XIcon = () =>
+  h(
+    "svg",
+    {
+      xmlns: "http://www.w3.org/2000/svg",
+      width: "20",
+      height: "20",
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": "2",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+    },
+    [
+      h("line", { x1: "18", y1: "6", x2: "6", y2: "18" }),
+      h("line", { x1: "6", y1: "6", x2: "18", y2: "18" }),
+    ],
+  );
 
 interface Emits {
   (e: "update:modelValue", value: boolean): void;
@@ -251,3 +327,95 @@ const handleClose = () => {
   selectedMedicine.value = undefined;
 };
 </script>
+
+<style scoped lang="scss">
+.prescription-item-dialog {
+  :deep(.el-dialog__header) {
+    padding: 0;
+    margin: 0;
+  }
+
+  :deep(.el-dialog__body) {
+    padding: 20px;
+  }
+
+  :deep(.el-dialog__footer) {
+    padding: 0;
+  }
+
+  .dialog-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+    color: white;
+
+    .header-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      flex-shrink: 0;
+    }
+
+    .header-title {
+      font-size: 16px;
+      font-weight: 600;
+      line-height: 1;
+    }
+  }
+
+  .dialog-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 12px 16px;
+    border-top: 1px solid #e5e7eb;
+
+    .footer-button {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      outline: none;
+
+      &.cancel-button {
+        background: white;
+        color: #6b7280;
+        border: 1px solid #d1d5db;
+
+        &:hover {
+          background: #f9fafb;
+          color: #374151;
+          border-color: #9ca3af;
+        }
+      }
+
+      &.submit-button {
+        background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+        color: white;
+        box-shadow: 0 2px 4px rgba(20, 184, 166, 0.2);
+
+        &:hover {
+          box-shadow: 0 4px 8px rgba(20, 184, 166, 0.3);
+          transform: translateY(-1px);
+        }
+
+        &:active {
+          transform: translateY(0);
+        }
+      }
+    }
+  }
+}
+</style>

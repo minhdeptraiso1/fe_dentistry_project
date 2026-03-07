@@ -1,46 +1,46 @@
 <template>
-  <div class="p-4">
-    <el-card>
-      <template #header>
-        <div class="flex items-center justify-between">
-          <h2 class="m-0 text-lg font-semibold">Quản lý phiếu khám</h2>
-          <div class="flex items-center gap-3">
-            <span class="text-sm text-gray-500"
-              >Role: {{ authStore.user?.role || "N/A" }}</span
-            >
-            <el-button
-              type="primary"
-              @click="handleCreate"
-              v-if="canCreateOrUpdate"
-            >
-              <el-icon><Plus /></el-icon>
-              Tạo phiếu khám
-            </el-button>
-          </div>
-        </div>
-      </template>
+  <div class="medical-record-list-container">
+    <!-- Page Header -->
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Quản lý phiếu khám</h1>
+        <p class="page-subtitle">Quản lý hồ sơ khám bệnh</p>
+      </div>
+      <button @click="handleCreate" class="add-button" v-if="canCreateOrUpdate">
+        <component :is="PlusIcon" />
+        <span>Tạo phiếu khám</span>
+      </button>
+    </div>
 
-      <!-- Search and filters -->
-      <div class="flex gap-3 flex-wrap items-end">
-        <div>
+    <!-- Search Section -->
+    <div class="search-card">
+      <div class="search-header">
+        <component :is="SearchIcon" class="search-header-icon" />
+        <span class="search-header-text">Tìm kiếm phiếu khám</span>
+      </div>
+
+      <div class="search-content">
+        <div class="search-row">
           <el-input
             v-model="searchParams.keyword"
             placeholder="Tìm kiếm theo mã phiếu khám, tên bệnh nhân..."
-            :prefix-icon="Search"
-            style="max-width: 300px"
             clearable
             @clear="loadMedicalRecords"
-          />
-        </div>
-        <div>
+            class="search-input"
+          >
+            <template #prefix>
+              <component :is="SearchIcon" class="input-icon" />
+            </template>
+          </el-input>
+
           <el-select
             v-model="searchParams.patientId"
             placeholder="Chọn bệnh nhân"
             filterable
             clearable
             :loading="patientLoading"
-            style="width: 200px"
             @clear="loadMedicalRecords"
+            class="search-select"
           >
             <el-option
               v-for="patient in patientOptions"
@@ -49,8 +49,7 @@
               :value="patient.id"
             />
           </el-select>
-        </div>
-        <div>
+
           <el-date-picker
             v-model="dateRange"
             type="daterange"
@@ -61,25 +60,53 @@
             value-format="YYYY-MM-DD"
             clearable
             @clear="loadMedicalRecords"
+            class="search-date-range"
           />
         </div>
-        <el-button type="primary" @click="handleSearch" :icon="Search">
-          Tìm kiếm
-        </el-button>
-      </div>
 
-      <!-- Medical Record table -->
-      <el-table :data="medicalRecords" class="w-full mt-4" v-loading="loading">
-        <el-table-column type="index" label="STT" width="60" />
-        <el-table-column prop="recordCode" label="Mã phiếu khám" width="130" />
-        <el-table-column label="Bệnh nhân" min-width="150">
+        <div class="search-actions">
+          <button @click="handleSearch" class="search-button">
+            <component :is="SearchIcon" />
+            <span>Tìm kiếm</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table Section -->
+    <div class="table-card">
+      <el-table :data="medicalRecords" v-loading="loading" class="modern-table">
+        <el-table-column type="index" label="STT" width="60" align="center" />
+        <el-table-column
+          prop="recordCode"
+          label="Mã phiếu khám"
+          min-width="130"
+        >
           <template #default="{ row }">
-            <el-button link type="primary" @click="viewPatient(row.patientId)">
-              {{ row.patientName }}
-            </el-button>
+            <span class="font-semibold text-teal-600">{{
+              row.recordCode
+            }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="doctorUsername" label="Bác sĩ" width="120" />
+        <el-table-column label="Bệnh nhân" min-width="150">
+          <template #default="{ row }">
+            <button @click="viewPatient(row.patientId)" class="patient-link">
+              {{ row.patientName }}
+            </button>
+          </template>
+        </el-table-column>
+        <el-table-column label="Bác sĩ" width="140">
+          <template #default="{ row }">
+            <div class="flex items-center gap-2">
+              <component
+                :is="DoctorIcon"
+                class="text-gray-400"
+                style="width: 16px; height: 16px"
+              />
+              <span>{{ row.doctorUsername }}</span>
+            </div>
+          </template>
+        </el-table-column>
         <el-table-column label="Ngày khám" width="120">
           <template #default="{ row }">
             {{ formatDate(row.visitDate) }}
@@ -105,43 +132,55 @@
             {{ row.diagnosis || "-" }}
           </template>
         </el-table-column>
-        <el-table-column label="Thao tác" width="200" fixed="right">
+        <el-table-column
+          label="Thao tác"
+          width="260"
+          fixed="right"
+          align="center"
+        >
           <template #default="{ row }">
-            <el-button link type="primary" @click="viewDetail(row.id)">
-              Chi tiết
-            </el-button>
-            <el-button
-              link
-              type="primary"
-              @click="handleEdit(row)"
-              v-if="canCreateOrUpdate"
-            >
-              Sửa
-            </el-button>
-            <el-button
-              link
-              type="danger"
-              @click="handleDelete(row)"
-              v-if="canDelete"
-            >
-              Xóa
-            </el-button>
+            <div class="action-buttons">
+              <button
+                @click="viewDetail(row.id)"
+                class="action-btn action-btn-info"
+              >
+                <component :is="EyeIcon" />
+                <span>Chi tiết</span>
+              </button>
+              <button
+                v-if="canCreateOrUpdate"
+                @click="handleEdit(row)"
+                class="action-btn action-btn-primary"
+              >
+                <component :is="EditIcon" />
+                <span>Sửa</span>
+              </button>
+              <button
+                v-if="canDelete"
+                @click="handleDelete(row)"
+                class="action-btn action-btn-danger"
+              >
+                <component :is="TrashIcon" />
+                <span>Xóa</span>
+              </button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
 
       <!-- Pagination -->
-      <el-pagination
-        v-model:current-page="currentPage"
-        v-model:page-size="pageSize"
-        :total="totalElements"
-        :page-sizes="[10, 20, 50, 100]"
-        layout="total, sizes, prev, pager, next, jumper"
-        class="mt-4 !justify-center"
-        @size-change="handlePageSizeChange"
-        @current-change="handlePageChange"
-      />
-    </el-card>
+      <div class="pagination-wrapper">
+        <el-pagination
+          v-model:current-page="currentPage"
+          v-model:page-size="pageSize"
+          :total="totalElements"
+          :page-sizes="[10, 20, 50, 100]"
+          layout="total, sizes, prev, pager, next, jumper"
+          @size-change="handlePageSizeChange"
+          @current-change="handlePageChange"
+        />
+      </div>
+    </div>
 
     <!-- Add/Edit Dialog -->
     <MedicalRecordFormDialog
@@ -153,9 +192,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed, watch } from "vue";
+import { ref, reactive, onMounted, computed, watch, h } from "vue";
 import { useRouter } from "vue-router";
-import { Plus, Search } from "@element-plus/icons-vue";
 import { ElMessageBox } from "element-plus";
 import { notification } from "@/utils/notification";
 import { medicalRecordApi } from "@/api/medicalRecord";
@@ -164,6 +202,131 @@ import { formatDate } from "@/utils/date";
 import { useAuthStore } from "@/stores/auth";
 import MedicalRecordFormDialog from "./components/MedicalRecordFormDialog.vue";
 import type { MedicalRecord, Patient } from "@/types";
+
+// Custom Icons
+const PlusIcon = () =>
+  h(
+    "svg",
+    {
+      xmlns: "http://www.w3.org/2000/svg",
+      fill: "none",
+      viewBox: "0 0 24 24",
+      "stroke-width": "2",
+      stroke: "currentColor",
+      class: "w-5 h-5",
+    },
+    [
+      h("path", {
+        "stroke-linecap": "round",
+        "stroke-linejoin": "round",
+        d: "M12 4v16m8-8H4",
+      }),
+    ],
+  );
+
+const SearchIcon = () =>
+  h(
+    "svg",
+    {
+      xmlns: "http://www.w3.org/2000/svg",
+      fill: "none",
+      viewBox: "0 0 24 24",
+      "stroke-width": "2",
+      stroke: "currentColor",
+      class: "w-5 h-5",
+    },
+    [
+      h("path", {
+        "stroke-linecap": "round",
+        "stroke-linejoin": "round",
+        d: "M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z",
+      }),
+    ],
+  );
+
+const EyeIcon = () =>
+  h(
+    "svg",
+    {
+      xmlns: "http://www.w3.org/2000/svg",
+      fill: "none",
+      viewBox: "0 0 24 24",
+      "stroke-width": "2",
+      stroke: "currentColor",
+      class: "w-4 h-4",
+    },
+    [
+      h("path", {
+        "stroke-linecap": "round",
+        "stroke-linejoin": "round",
+        d: "M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z",
+      }),
+      h("path", {
+        "stroke-linecap": "round",
+        "stroke-linejoin": "round",
+        d: "M15 12a3 3 0 11-6 0 3 3 0 016 0z",
+      }),
+    ],
+  );
+
+const EditIcon = () =>
+  h(
+    "svg",
+    {
+      xmlns: "http://www.w3.org/2000/svg",
+      fill: "none",
+      viewBox: "0 0 24 24",
+      "stroke-width": "2",
+      stroke: "currentColor",
+      class: "w-4 h-4",
+    },
+    [
+      h("path", {
+        "stroke-linecap": "round",
+        "stroke-linejoin": "round",
+        d: "M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10",
+      }),
+    ],
+  );
+
+const TrashIcon = () =>
+  h(
+    "svg",
+    {
+      xmlns: "http://www.w3.org/2000/svg",
+      fill: "none",
+      viewBox: "0 0 24 24",
+      "stroke-width": "2",
+      stroke: "currentColor",
+      class: "w-4 h-4",
+    },
+    [
+      h("path", {
+        "stroke-linecap": "round",
+        "stroke-linejoin": "round",
+        d: "M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0",
+      }),
+    ],
+  );
+
+const DoctorIcon = () =>
+  h(
+    "svg",
+    {
+      xmlns: "http://www.w3.org/2000/svg",
+      fill: "none",
+      viewBox: "0 0 24 24",
+      "stroke-width": "2",
+      stroke: "currentColor",
+    },
+    [
+      h("path", {
+        "stroke-linecap": "round",
+        "stroke-linejoin": "round",
+        d: "M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5zm6-10.125a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0zm1.294 6.336a6.721 6.721 0 01-3.17.789 6.721 6.721 0 01-3.168-.789 3.376 3.376 0 016.338 0z",
+      }),
+    ],
+  );
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -345,7 +508,9 @@ const handleDelete = async (record: MedicalRecord) => {
       {
         confirmButtonText: "Xóa",
         cancelButtonText: "Hủy",
-        type: "warning",
+        customClass: "modern-confirm-dialog",
+        confirmButtonClass: "modern-confirm-button",
+        cancelButtonClass: "modern-cancel-button",
       },
     );
 
@@ -386,3 +551,335 @@ onMounted(async () => {
   loadMedicalRecords();
 });
 </script>
+
+<style lang="scss" scoped>
+.medical-record-list-container {
+  padding: 24px;
+  background: #f9fafb;
+  min-height: calc(100vh - 64px);
+
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding: 20px 24px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+    .page-title {
+      font-size: 28px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin: 0 0 4px 0;
+    }
+
+    .page-subtitle {
+      font-size: 14px;
+      color: #6b7280;
+      margin: 0;
+    }
+
+    .add-button {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(20, 184, 166, 0.3);
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(20, 184, 166, 0.4);
+      }
+
+      &:active {
+        transform: translateY(0);
+      }
+    }
+  }
+
+  .search-card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+    .search-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid #f3f4f6;
+
+      .search-header-icon {
+        width: 24px;
+        height: 24px;
+        color: #14b8a6;
+      }
+
+      .search-header-text {
+        font-size: 18px;
+        font-weight: 600;
+        color: #111827;
+      }
+    }
+
+    .search-content {
+      .search-row {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 20px;
+
+        .search-input {
+          flex: 1;
+        }
+
+        .search-select {
+          width: 240px;
+        }
+
+        .search-date-range {
+          width: 280px;
+        }
+
+        :deep(.el-input) {
+          .el-input__wrapper {
+            border-radius: 10px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+
+            &:hover {
+              box-shadow: 0 2px 8px rgba(20, 184, 166, 0.15);
+            }
+
+            &.is-focus {
+              box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+            }
+          }
+
+          .el-input__prefix {
+            display: flex;
+            align-items: center;
+          }
+        }
+
+        :deep(.el-select) {
+          width: 100%;
+
+          .el-input__wrapper {
+            border-radius: 10px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+
+            &:hover {
+              box-shadow: 0 2px 8px rgba(20, 184, 166, 0.15);
+            }
+
+            &.is-focus {
+              box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+            }
+          }
+        }
+
+        :deep(.el-date-editor) {
+          width: 100%;
+          \n\n .el-input__wrapper {
+            border-radius: 10px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+
+            &:hover {
+              box-shadow: 0 2px 8px rgba(20, 184, 166, 0.15);
+            }
+
+            &.is-focus {
+              box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+            }
+          }
+        }
+
+        .input-icon {
+          width: 16px;
+          height: 16px;
+          color: #14b8a6;
+        }
+      }
+
+      .search-actions {
+        display: flex;
+        gap: 12px;
+
+        .search-button {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 12px 24px;
+          background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+          color: white;
+          border: none;
+          border-radius: 10px;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          box-shadow: 0 2px 8px rgba(20, 184, 166, 0.25);
+          height: 40px;
+
+          &:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(20, 184, 166, 0.35);
+          }
+
+          &:active {
+            transform: translateY(0);
+          }
+        }
+      }
+    }
+  }
+
+  .table-card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+    .modern-table {
+      :deep(.el-table__header-wrapper) {
+        th {
+          background: #f9fafb;
+          color: #374151;
+          font-weight: 600;
+          font-size: 13px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+      }
+
+      :deep(.el-table__row) {
+        transition: all 0.2s ease;
+
+        &:hover {
+          background: #f0fdfa !important;
+        }
+
+        td {
+          padding: 16px 0;
+          border-bottom: 1px solid #f3f4f6;
+        }
+      }
+    }
+
+    .patient-link {
+      color: #14b8a6;
+      font-weight: 500;
+      background: none;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      padding: 0;
+
+      &:hover {
+        color: #0d9488;
+        text-decoration: underline;
+      }
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 6px;
+      justify-content: center;
+      flex-wrap: nowrap;
+    }
+
+    .action-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &.action-btn-info {
+        background: #eff6ff;
+        color: #2563eb;
+
+        &:hover {
+          background: #dbeafe;
+          transform: translateY(-1px);
+        }
+      }
+
+      &.action-btn-primary {
+        background: #ecfdf5;
+        color: #14b8a6;
+
+        &:hover {
+          background: #d1fae5;
+          transform: translateY(-1px);
+        }
+      }
+
+      &.action-btn-danger {
+        background: #fef2f2;
+        color: #ef4444;
+
+        &:hover {
+          background: #fee2e2;
+          transform: translateY(-1px);
+        }
+      }
+    }
+  }
+
+  .pagination-wrapper {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #f3f4f6;
+    display: flex;
+    justify-content: center;
+
+    :deep(.el-pagination) {
+      .btn-prev,
+      .btn-next,
+      .el-pager li {
+        border-radius: 8px;
+        font-weight: 500;
+
+        &:hover {
+          color: #14b8a6;
+        }
+
+        &.is-active {
+          background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+          color: white;
+        }
+      }
+    }
+  }
+
+  .input-icon {
+    width: 16px;
+    height: 16px;
+    color: #9ca3af;
+  }
+}
+</style>

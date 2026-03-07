@@ -77,6 +77,33 @@ export const useAuthStore = defineStore("auth", () => {
     }
   };
 
+  const refreshToken = async () => {
+    try {
+      const refreshTokenValue = tokenStorage.getRefreshToken();
+      if (!refreshTokenValue) {
+        throw new Error("No refresh token");
+      }
+
+      const response: any = await authApi.refreshToken(refreshTokenValue);
+
+      // Update tokens
+      if (response.accessToken) {
+        token.value = response.accessToken;
+        tokenStorage.setAccessToken(response.accessToken);
+      }
+      if (response.refreshToken) {
+        tokenStorage.setRefreshToken(response.refreshToken);
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Refresh token error:", error);
+      // Token hết hạn, logout
+      await logout();
+      return false;
+    }
+  };
+
   const fetchUserInfo = async () => {
     try {
       const userData: any = await authApi.getCurrentUser();
@@ -153,6 +180,7 @@ export const useAuthStore = defineStore("auth", () => {
     // Actions
     login,
     logout,
+    refreshToken,
     fetchUserInfo,
     checkAuth,
   };
