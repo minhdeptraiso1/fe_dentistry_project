@@ -13,11 +13,12 @@
       @show="loadWarnings"
     >
       <template #reference>
-        <el-button circle>
-          <el-icon :size="20">
-            <WarningFilled />
-          </el-icon>
-        </el-button>
+        <button
+          class="notification-button"
+          :class="{ 'has-warning': warningCount > 0 }"
+        >
+          <component :is="BellIcon" />
+        </button>
       </template>
 
       <div class="warning-popover">
@@ -91,10 +92,30 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
-import { WarningFilled } from "@element-plus/icons-vue";
+import { ref, computed, h } from "vue";
 import { inventoryApi } from "@/api/inventory";
 import type { BatchExpiryWarning } from "@/types/inventory";
+
+// Custom Bell Icon
+const BellIcon = () =>
+  h(
+    "svg",
+    {
+      xmlns: "http://www.w3.org/2000/svg",
+      fill: "none",
+      viewBox: "0 0 24 24",
+      "stroke-width": "2",
+      stroke: "currentColor",
+      class: "w-5 h-5",
+    },
+    [
+      h("path", {
+        "stroke-linecap": "round",
+        "stroke-linejoin": "round",
+        d: "M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9",
+      }),
+    ],
+  );
 
 const loading = ref(false);
 const warnings = ref<BatchExpiryWarning[]>([]);
@@ -134,6 +155,65 @@ setInterval(loadWarnings, 5 * 60 * 1000);
 .warning-badge {
   :deep(.el-badge__content) {
     font-weight: 600;
+    font-size: 11px;
+    height: 18px;
+    line-height: 18px;
+    padding: 0 5px;
+    border: 2px solid white;
+  }
+}
+
+.notification-button {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+  color: #666;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+
+  &:hover {
+    background: linear-gradient(135deg, #e8e8e8 0%, #d9d9d9 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    color: #14b8a6;
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+
+  &.has-warning {
+    background: linear-gradient(135deg, #fef3e8 0%, #fee8d0 100%);
+    color: #f59e0b;
+    animation: pulse 2s infinite;
+
+    &:hover {
+      background: linear-gradient(135deg, #fee8d0 0%, #fdd9b5 100%);
+      color: #ea580c;
+    }
+  }
+
+  svg {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+  50% {
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
   }
 }
 

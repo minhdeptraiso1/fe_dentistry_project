@@ -108,6 +108,13 @@ const routes: RouteRecordRaw[] = [
         meta: { title: "Quản lý đơn thuốc" },
       },
       {
+        path: "/prescriptions/:id",
+        name: "PrescriptionDetail",
+        component: () =>
+          import("@/views/prescriptions/PrescriptionDetailView.vue"),
+        meta: { title: "Chi tiết đơn thuốc" },
+      },
+      {
         path: "/inventory-report",
         name: "InventoryReport",
         component: () => import("@/views/dashboard/InventoryReportView.vue"),

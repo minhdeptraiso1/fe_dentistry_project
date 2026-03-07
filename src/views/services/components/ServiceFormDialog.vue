@@ -1,16 +1,29 @@
 <template>
   <el-dialog
     v-model="visible"
-    :title="isEdit ? 'Cập nhật dịch vụ' : 'Thêm dịch vụ mới'"
+    :show-close="false"
     width="800px"
     :close-on-click-modal="false"
     @close="handleClose"
+    class="modern-dialog"
   >
+    <template #header>
+      <div class="dialog-header">
+        <div class="header-content">
+          <component :is="ServiceIcon" class="header-icon" />
+          <span class="header-title">{{
+            isEdit ? "Cập nhật dịch vụ" : "Thêm dịch vụ mới"
+          }}</span>
+        </div>
+      </div>
+    </template>
     <el-form
       ref="formRef"
       :model="formData"
       :rules="rules"
       label-width="140px"
+      label-position="left"
+      class="modern-form"
       @submit.prevent="handleSubmit"
     >
       <el-form-item label="Tên dịch vụ" prop="name">
@@ -102,10 +115,10 @@
         </el-divider>
 
         <div class="mb-4">
-          <el-button type="primary" plain size="small" @click="handleAddStep">
-            <el-icon class="mr-1"><Plus /></el-icon>
-            Thêm bước
-          </el-button>
+          <button @click.prevent="handleAddStep" class="add-item-button">
+            <component :is="PlusIcon" />
+            <span>Thêm bước</span>
+          </button>
         </div>
 
         <el-table
@@ -181,18 +194,23 @@
     </el-form>
 
     <template #footer>
-      <el-button @click="handleClose">Hủy</el-button>
-      <el-button type="primary" :loading="loading" @click="handleSubmit">
-        {{ isEdit ? "Cập nhật" : "Tạo mới" }}
-      </el-button>
+      <div class="dialog-footer">
+        <button @click="handleClose" class="cancel-button">
+          <component :is="CloseIcon" />
+          <span>Hủy</span>
+        </button>
+        <button @click="handleSubmit" :disabled="loading" class="submit-button">
+          <component :is="loading ? LoadingIcon : CheckIcon" />
+          <span>{{ isEdit ? "Cập nhật" : "Tạo mới" }}</span>
+        </button>
+      </div>
     </template>
   </el-dialog>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch } from "vue";
+import { ref, reactive, computed, watch, h } from "vue";
 import { type FormInstance, type FormRules } from "element-plus";
-import { Plus } from "@element-plus/icons-vue";
 import { notification } from "@/utils/notification";
 import { serviceApi } from "@/api/service";
 import type {
@@ -201,6 +219,105 @@ import type {
   UpdateServiceRequest,
   CreateServiceStepRequest,
 } from "@/types/service";
+
+// Icon components
+const ServiceIcon = () =>
+  h(
+    "svg",
+    {
+      xmlns: "http://www.w3.org/2000/svg",
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": "2",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      style: { width: "24px", height: "24px" },
+    },
+    [
+      h("path", {
+        d: "M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z",
+      }),
+      h("polyline", { points: "3.27 6.96 12 12.01 20.73 6.96" }),
+      h("line", { x1: "12", y1: "22.08", x2: "12", y2: "12" }),
+    ],
+  );
+
+const CloseIcon = () =>
+  h(
+    "svg",
+    {
+      xmlns: "http://www.w3.org/2000/svg",
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": "2",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      style: { width: "20px", height: "20px" },
+    },
+    [
+      h("line", { x1: "18", y1: "6", x2: "6", y2: "18" }),
+      h("line", { x1: "6", y1: "6", x2: "18", y2: "18" }),
+    ],
+  );
+
+const CheckIcon = () =>
+  h(
+    "svg",
+    {
+      xmlns: "http://www.w3.org/2000/svg",
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": "2",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      style: { width: "20px", height: "20px" },
+    },
+    [h("polyline", { points: "20 6 9 17 4 12" })],
+  );
+
+const LoadingIcon = () =>
+  h(
+    "svg",
+    {
+      xmlns: "http://www.w3.org/2000/svg",
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": "2",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      class: "animate-spin",
+      style: { width: "20px", height: "20px" },
+    },
+    [
+      h("line", { x1: "12", y1: "2", x2: "12", y2: "6" }),
+      h("line", { x1: "12", y1: "18", x2: "12", y2: "22" }),
+      h("line", { x1: "4.93", y1: "4.93", x2: "7.76", y2: "7.76" }),
+      h("line", { x1: "16.24", y1: "16.24", x2: "19.07", y2: "19.07" }),
+      h("line", { x1: "2", y1: "12", x2: "6", y2: "12" }),
+      h("line", { x1: "18", y1: "12", x2: "22", y2: "12" }),
+      h("line", { x1: "4.93", y1: "19.07", x2: "7.76", y2: "16.24" }),
+      h("line", { x1: "16.24", y1: "7.76", x2: "19.07", y2: "4.93" }),
+    ],
+  );
+
+const PlusIcon = () =>
+  h(
+    "svg",
+    {
+      xmlns: "http://www.w3.org/2000/svg",
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": "2",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+    },
+    [h("path", { d: "M5 12h14" }), h("path", { d: "M12 5v14" })],
+  );
 
 const props = defineProps<{
   modelValue: boolean;
@@ -441,5 +558,205 @@ const handleSubmit = async () => {
 </script>
 
 <style scoped lang="scss">
-// Custom styles if needed
+.modern-dialog {
+  :deep(.el-dialog) {
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .dialog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+    padding: 20px 24px;
+    color: white;
+
+    .header-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      .header-icon {
+        width: 24px;
+        height: 24px;
+        color: white;
+      }
+
+      .header-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: white;
+      }
+    }
+
+    .close-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      color: white;
+      padding: 0;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: scale(1.1);
+      }
+    }
+  }
+
+  :deep(.el-dialog__body) {
+    padding: 24px;
+    max-height: 65vh;
+    overflow-y: auto;
+  }
+
+  :deep(.el-dialog__footer) {
+    padding: 16px 24px;
+    border-top: 1px solid #f3f4f6;
+  }
+}
+
+.modern-form {
+  :deep(.el-form-item) {
+    margin-bottom: 20px;
+
+    .el-form-item__label {
+      font-weight: 600;
+      color: #374151;
+      font-size: 14px;
+    }
+
+    .el-input__wrapper {
+      border-radius: 10px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      padding: 8px 12px;
+      transition: all 0.3s ease;
+
+      &:hover {
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+      }
+
+      &.is-focus {
+        box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+      }
+    }
+
+    .el-textarea__inner {
+      border-radius: 10px;
+      padding: 12px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+
+      &:hover {
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+      }
+
+      &:focus {
+        box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+      }
+    }
+
+    .el-select,
+    .el-input-number {
+      .el-input__wrapper {
+        &.is-focus {
+          box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+        }
+      }
+    }
+  }
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px;
+  background: white;
+
+  .cancel-button,
+  .submit-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .cancel-button {
+    padding: 10px 24px;
+    border: 1px solid #e5e7eb;
+    background: white;
+    color: #6b7280;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover {
+      background: #f9fafb;
+      border-color: #d1d5db;
+      color: #374151;
+    }
+  }
+
+  .submit-button {
+    padding: 10px 24px;
+    border: none;
+    background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+    color: white;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(20, 184, 166, 0.3);
+
+    &:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(20, 184, 166, 0.4);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.add-item-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 28px;
+  background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(20, 184, 166, 0.3);
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(20, 184, 166, 0.4);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
 </style>

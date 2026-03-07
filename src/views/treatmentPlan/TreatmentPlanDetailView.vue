@@ -1,107 +1,150 @@
 <template>
-  <div class="treatment-plan-detail">
-    <el-card v-loading="loading">
-      <template #header>
-        <div class="flex justify-between items-center">
-          <div class="flex items-center gap-3">
-            <el-button
-              type="default"
-              :icon="ArrowLeft"
-              circle
-              @click="handleBack"
-            />
-            <h2 class="text-xl font-semibold">Chi tiết kế hoạch điều trị</h2>
+  <div class="treatment-plan-detail-view">
+    <!-- Header -->
+    <div class="detail-header">
+      <button @click="handleBack" class="back-button">
+        <component :is="BackIcon" />
+        <span>Quay lại</span>
+      </button>
+
+      <div v-if="authStore.isAdmin || canEdit" class="header-actions">
+        <button
+          v-if="canEdit"
+          @click="handleEdit"
+          class="action-button action-button-warning"
+        >
+          <component :is="EditIcon" />
+          <span>Chỉnh sửa</span>
+        </button>
+        <button
+          v-if="authStore.isAdmin"
+          @click="handleDelete"
+          class="action-button action-button-danger"
+        >
+          <component :is="TrashIcon" />
+          <span>Xóa</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div v-if="loading" class="loading-container">
+      <div class="loading-spinner"></div>
+      <p>Đang tải thông tin kế hoạch điều trị...</p>
+    </div>
+
+    <!-- Treatment Plan Detail -->
+    <div v-if="treatmentPlan" class="detail-card">
+      <div class="card-title">
+        <component :is="PlanIcon" class="title-icon" />
+        <h2>{{ treatmentPlan.planCode }}</h2>
+        <el-tag :type="getStatusType(treatmentPlan.status)" class="status-tag">
+          {{ getStatusLabel(treatmentPlan.status) }}
+        </el-tag>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-item">
+          <div class="info-label">
+            <component :is="PatientIcon" />
+            <span>Mã bệnh nhân</span>
           </div>
-          <div class="flex gap-2">
-            <el-button
-              v-if="canEdit"
-              type="warning"
-              :icon="Edit"
-              @click="handleEdit"
-            >
-              Sửa
-            </el-button>
-            <el-button
-              v-if="authStore.isAdmin"
-              type="danger"
-              :icon="Delete"
-              @click="handleDelete"
-            >
-              Xóa
-            </el-button>
-          </div>
+          <div class="info-value">{{ treatmentPlan.patientCode }}</div>
         </div>
-      </template>
 
-      <div v-if="treatmentPlan">
-        <!-- Basic Info -->
-        <el-descriptions :column="2" border>
-          <el-descriptions-item label="Mã kế hoạch">
-            <span class="font-semibold">{{ treatmentPlan.planCode }}</span>
-          </el-descriptions-item>
-          <el-descriptions-item label="Trạng thái">
-            <el-tag :type="getStatusType(treatmentPlan.status)">
-              {{ getStatusLabel(treatmentPlan.status) }}
-            </el-tag>
-          </el-descriptions-item>
-
-          <el-descriptions-item label="Mã bệnh nhân">
-            {{ treatmentPlan.patientCode }}
-          </el-descriptions-item>
-          <el-descriptions-item label="Tên bệnh nhân">
+        <div class="info-item">
+          <div class="info-label">
+            <component :is="UserIcon" />
+            <span>Tên bệnh nhân</span>
+          </div>
+          <div class="info-value">
             <router-link
               :to="`/patients/${treatmentPlan.patientId}`"
-              class="text-blue-600 hover:underline"
+              class="link-text"
             >
               {{ treatmentPlan.patientName }}
             </router-link>
-          </el-descriptions-item>
+          </div>
+        </div>
 
-          <el-descriptions-item label="Bác sĩ">
-            {{ treatmentPlan.doctorUsername }}
-          </el-descriptions-item>
-          <el-descriptions-item label="Mã hồ sơ">
+        <div class="info-item">
+          <div class="info-label">
+            <component :is="DoctorIcon" />
+            <span>Bác sĩ</span>
+          </div>
+          <div class="info-value">{{ treatmentPlan.doctorUsername }}</div>
+        </div>
+
+        <div class="info-item">
+          <div class="info-label">
+            <component :is="RecordIcon" />
+            <span>Mã hồ sơ</span>
+          </div>
+          <div class="info-value">
             <router-link
               :to="`/medical-records/${treatmentPlan.medicalRecordId}`"
-              class="text-blue-600 hover:underline"
+              class="link-text"
             >
               {{ treatmentPlan.medicalRecordId }}
             </router-link>
-          </el-descriptions-item>
+          </div>
+        </div>
 
-          <el-descriptions-item label="Ngày tạo">
+        <div class="info-item">
+          <div class="info-label">
+            <component :is="ClockIcon" />
+            <span>Ngày tạo</span>
+          </div>
+          <div class="info-value">
             {{ formatDateTime(treatmentPlan.createdAt) }}
-          </el-descriptions-item>
-          <el-descriptions-item label="Cập nhật">
+          </div>
+        </div>
+
+        <div class="info-item">
+          <div class="info-label">
+            <component :is="ClockIcon" />
+            <span>Cập nhật lần cuối</span>
+          </div>
+          <div class="info-value">
             {{ formatDateTime(treatmentPlan.updatedAt) }}
-          </el-descriptions-item>
+          </div>
+        </div>
 
-          <el-descriptions-item label="Ghi chú" :span="2">
-            {{ treatmentPlan.note || "—" }}
-          </el-descriptions-item>
-        </el-descriptions>
+        <div v-if="treatmentPlan.note" class="info-item full-width">
+          <div class="info-label">
+            <component :is="NoteIcon" />
+            <span>Ghi chú</span>
+          </div>
+          <div class="info-value whitespace-pre-wrap">
+            {{ treatmentPlan.note }}
+          </div>
+        </div>
+      </div>
+    </div>
 
-        <!-- Treatment Items -->
-        <el-divider content-position="left">
-          <span class="text-lg font-semibold">Danh sách dịch vụ điều trị</span>
-        </el-divider>
+    <!-- Treatment Items Card -->
+    <div v-if="treatmentPlan && treatmentPlan.items" class="detail-card">
+      <div class="card-title">
+        <component :is="ServiceIcon" class="title-icon" />
+        <h2>Danh sách dịch vụ điều trị</h2>
+      </div>
 
+      <div class="items-table">
         <el-table
           :data="treatmentPlan.items"
           border
           stripe
           style="width: 100%"
-          :summary-method="getSummaries"
-          show-summary
+          class="modern-table"
         >
-          <el-table-column type="index" label="STT" width="60" />
+          <el-table-column type="index" label="STT" width="60" align="center" />
           <el-table-column prop="serviceCode" label="Mã DV" width="100" />
           <el-table-column
             prop="itemName"
             label="Tên dịch vụ"
             min-width="180"
           />
-          <el-table-column label="Loại" width="100">
+          <el-table-column label="Loại" width="100" align="center">
             <template #default="{ row }">
               <el-tag
                 :type="row.serviceType === 'SINGLE' ? 'success' : 'warning'"
@@ -131,7 +174,7 @@
           </el-table-column>
           <el-table-column label="Thành tiền" width="140" align="right">
             <template #default="{ row }">
-              <span class="font-semibold text-green-600">
+              <span class="price-highlight font-semibold">
                 {{ formatCurrency(row.lineTotal) }}
               </span>
             </template>
@@ -158,46 +201,50 @@
               {{ row.note || "—" }}
             </template>
           </el-table-column>
-          <el-table-column label="Thao tác" width="100" fixed="right">
+          <el-table-column label="Thao tác" width="130" fixed="right" align="center">
             <template #default="{ row }">
-              <el-button
+              <button
                 v-if="canMarkDone(row.status)"
-                type="success"
-                size="small"
-                link
                 @click="handleMarkDone(row.id)"
+                class="done-btn"
               >
-                <el-icon><Check /></el-icon>
-                Hoàn thành
-              </el-button>
+                <component :is="CheckIcon" />
+                <span>Hoàn thành</span>
+              </button>
             </template>
           </el-table-column>
         </el-table>
+      </div>
 
-        <!-- Total Summary -->
-        <div class="mt-6 flex justify-end">
-          <el-card style="width: 400px" shadow="never">
-            <el-descriptions :column="1" border>
-              <el-descriptions-item label="Tổng tiền">
-                <span class="text-lg font-semibold">
-                  {{ formatCurrency(treatmentPlan.totalAmount) }}
-                </span>
-              </el-descriptions-item>
-              <el-descriptions-item label="Tổng giảm giá">
-                <span class="text-lg font-semibold text-red-600">
-                  {{ formatCurrency(treatmentPlan.discountAmount) }}
-                </span>
-              </el-descriptions-item>
-              <el-descriptions-item label="Thành tiền">
-                <span class="text-xl font-bold text-green-600">
-                  {{ formatCurrency(treatmentPlan.finalAmount) }}
-                </span>
-              </el-descriptions-item>
-            </el-descriptions>
-          </el-card>
+      <!-- Total Summary -->
+      <div class="summary-section">
+        <div class="summary-card">
+          <div class="summary-row">
+            <span class="summary-label">Tổng tiền:</span>
+            <span class="summary-value">
+              {{ formatCurrency(treatmentPlan.totalAmount) }}
+            </span>
+          </div>
+          <div class="summary-row discount-row">
+            <span class="summary-label">Tổng giảm giá:</span>
+            <span class="summary-value discount-value">
+              {{ formatCurrency(treatmentPlan.discountAmount) }}
+            </span>
+          </div>
+          <div class="summary-row total-row">
+            <span class="summary-label">Thành tiền:</span>
+            <span class="summary-value final-value">
+              {{ formatCurrency(treatmentPlan.finalAmount) }}
+            </span>
+          </div>
         </div>
       </div>
-    </el-card>
+    </div>
+
+    <!-- Error state -->
+    <div v-else-if="!loading" class="detail-card">
+      <el-empty description="Không tìm thấy thông tin kế hoạch điều trị" />
+    </div>
 
     <!-- Form Dialog -->
     <TreatmentPlanFormDialog
@@ -210,10 +257,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, h } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { ArrowLeft, Edit, Delete, Check } from "@element-plus/icons-vue";
 import { treatmentPlanApi } from "@/api/treatmentPlan";
 import { useAuthStore } from "@/stores/auth";
 import type {
@@ -222,6 +268,233 @@ import type {
   TreatmentItemStatus,
 } from "@/types/treatmentPlan";
 import TreatmentPlanFormDialog from "./components/TreatmentPlanFormDialog.vue";
+
+// Custom Icons
+const BackIcon = () =>
+  h(
+    "svg",
+    {
+      xmlns: "http://www.w3.org/2000/svg",
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": "2",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+    },
+    [
+      h("path", { d: "m12 19-7-7 7-7" }),
+      h("path", { d: "M19 12H5" }),
+    ],
+  );
+
+const EditIcon = () =>
+  h(
+    "svg",
+    {
+      xmlns: "http://www.w3.org/2000/svg",
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": "2",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+    },
+    [
+      h("path", {
+        d: "M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z",
+      }),
+      h("path", { d: "m15 5 4 4" }),
+    ],
+  );
+
+const TrashIcon = () =>
+  h(
+    "svg",
+    {
+      xmlns: "http://www.w3.org/2000/svg",
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": "2",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+    },
+    [
+      h("path", { d: "M3 6h18" }),
+      h("path", { d: "M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" }),
+      h("path", { d: "M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" }),
+      h("line", { x1: "10", x2: "10", y1: "11", y2: "17" }),
+      h("line", { x1: "14", x2: "14", y1: "11", y2: "17" }),
+    ],
+  );
+
+const PlanIcon = () =>
+  h(
+    "svg",
+    {
+      xmlns: "http://www.w3.org/2000/svg",
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": "2",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+    },
+    [
+      h("path", { d: "M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" }),
+      h("polyline", { points: "14 2 14 8 20 8" }),
+      h("line", { x1: "16", x2: "8", y1: "13", y2: "13" }),
+      h("line", { x1: "16", x2: "8", y1: "17", y2: "17" }),
+      h("line", { x1: "10", x2: "8", y1: "9", y2: "9" }),
+    ],
+  );
+
+const PatientIcon = () =>
+  h(
+    "svg",
+    {
+      xmlns: "http://www.w3.org/2000/svg",
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": "2",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+    },
+    [
+      h("path", { d: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" }),
+      h("circle", { cx: "9", cy: "7", r: "4" }),
+      h("path", { d: "M22 21v-2a4 4 0 0 0-3-3.87" }),
+      h("path", { d: "M16 3.13a4 4 0 0 1 0 7.75" }),
+    ],
+  );
+
+const UserIcon = () =>
+  h(
+    "svg",
+    {
+      xmlns: "http://www.w3.org/2000/svg",
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": "2",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+    },
+    [
+      h("path", { d: "M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" }),
+      h("circle", { cx: "12", cy: "7", r: "4" }),
+    ],
+  );
+
+const DoctorIcon = () =>
+  h(
+    "svg",
+    {
+      xmlns: "http://www.w3.org/2000/svg",
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": "2",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+    },
+    [
+      h("path", { d: "M22 12h-4l-3 9L9 3l-3 9H2" }),
+    ],
+  );
+
+const RecordIcon = () =>
+  h(
+    "svg",
+    {
+      xmlns: "http://www.w3.org/2000/svg",
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": "2",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+    },
+    [
+      h("path", { d: "M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" }),
+      h("polyline", { points: "14 2 14 8 20 8" }),
+    ],
+  );
+
+const ClockIcon = () =>
+  h(
+    "svg",
+    {
+      xmlns: "http://www.w3.org/2000/svg",
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": "2",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+    },
+    [
+      h("circle", { cx: "12", cy: "12", r: "10" }),
+      h("polyline", { points: "12 6 12 12 16 14" }),
+    ],
+  );
+
+const NoteIcon = () =>
+  h(
+    "svg",
+    {
+      xmlns: "http://www.w3.org/2000/svg",
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": "2",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+    },
+    [
+      h("path", { d: "M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" }),
+      h("polyline", { points: "14 2 14 8 20 8" }),
+      h("line", { x1: "16", x2: "8", y1: "13", y2: "13" }),
+      h("line", { x1: "16", x2: "8", y1: "17", y2: "17" }),
+      h("line", { x1: "10", x2: "8", y1: "9", y2: "9" }),
+    ],
+  );
+
+const ServiceIcon = () =>
+  h(
+    "svg",
+    {
+      xmlns: "http://www.w3.org/2000/svg",
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": "2",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+    },
+    [
+      h("rect", { width: "18", height: "18", x: "3", y: "3", rx: "2", ry: "2" }),
+      h("line", { x1: "3", x2: "21", y1: "9", y2: "9" }),
+      h("line", { x1: "9", x2: "9", y1: "21", y2: "9" }),
+    ],
+  );
+
+const CheckIcon = () =>
+  h(
+    "svg",
+    {
+      xmlns: "http://www.w3.org/2000/svg",
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": "2",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+    },
+    [h("polyline", { points: "20 6 9 17 4 12" })],
+  );
 
 const route = useRoute();
 const router = useRouter();
@@ -250,8 +523,7 @@ const loadTreatmentPlan = async () => {
 
   try {
     loading.value = true;
-    const response = await treatmentPlanApi.getById(id);
-    treatmentPlan.value = response;
+    treatmentPlan.value = await treatmentPlanApi.getById(id);
   } catch (error) {
     console.error("Failed to load treatment plan:", error);
     ElMessage.error("Tải kế hoạch điều trị thất bại");
@@ -273,12 +545,14 @@ const handleDelete = async () => {
 
   try {
     await ElMessageBox.confirm(
-      `Xác nhận xóa kế hoạch điều trị "${treatmentPlan.value.planCode}"?`,
-      "Xác nhận",
+      `Bạn có chắc chắn muốn xóa kế hoạch điều trị "${treatmentPlan.value.planCode}"?`,
+      "Xác nhận xóa",
       {
         confirmButtonText: "Xóa",
         cancelButtonText: "Hủy",
-        type: "warning",
+        customClass: "modern-confirm-dialog",
+        confirmButtonClass: "modern-confirm-button",
+        cancelButtonClass: "modern-cancel-button",
       },
     );
 
@@ -298,20 +572,21 @@ const handleMarkDone = async (itemId: string) => {
 
   try {
     await ElMessageBox.confirm(
-      "Xác nhận đánh dấu dịch vụ này đã hoàn thành?",
-      "Xác nhận",
+      "Bạn có chắc chắn muốn đánh dấu dịch vụ này đã hoàn thành?",
+      "Xác nhận hoàn thành",
       {
         confirmButtonText: "Xác nhận",
         cancelButtonText: "Hủy",
-        type: "success",
+        customClass: "modern-confirm-dialog",
+        confirmButtonClass: "modern-confirm-button",
+        cancelButtonClass: "modern-cancel-button",
       },
     );
 
-    const response = await treatmentPlanApi.markItemDone(
+    treatmentPlan.value = await treatmentPlanApi.markItemDone(
       treatmentPlan.value.id,
       itemId,
     );
-    treatmentPlan.value = response;
     ElMessage.success("Đánh dấu hoàn thành thành công");
   } catch (error: any) {
     if (error !== "cancel") {
@@ -361,40 +636,6 @@ const getItemStatusLabel = (status: TreatmentItemStatus) => {
   return labelMap[status];
 };
 
-const getSummaries = (param: any) => {
-  const { columns } = param;
-  const sums: string[] = [];
-
-  columns.forEach((_column: any, index: number) => {
-    if (index === 0) {
-      sums[index] = "Tổng cộng";
-      return;
-    }
-    if (index === 4) {
-      // Quantity column
-      const total = treatmentPlan.value?.items.reduce(
-        (sum, item) => sum + item.quantity,
-        0,
-      );
-      sums[index] = total?.toString() || "0";
-      return;
-    }
-    if (index === 6) {
-      // Discount column
-      sums[index] = formatCurrency(treatmentPlan.value?.discountAmount || 0);
-      return;
-    }
-    if (index === 7) {
-      // Line total column
-      sums[index] = formatCurrency(treatmentPlan.value?.finalAmount || 0);
-      return;
-    }
-    sums[index] = "";
-  });
-
-  return sums;
-};
-
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat("vi-VN", {
     style: "currency",
@@ -411,8 +652,342 @@ onMounted(() => {
 });
 </script>
 
-<style scoped>
-.treatment-plan-detail {
-  padding: 20px;
+<style scoped lang="scss">
+.treatment-plan-detail-view {
+  padding: 0;
+}
+
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding: 20px 24px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+  .back-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: white;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    color: #6b7280;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover {
+      background: #f9fafb;
+      border-color: #14b8a6;
+      color: #14b8a6;
+      transform: translateX(-4px);
+    }
+
+    svg {
+      width: 20px;
+      height: 20px;
+    }
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 12px;
+  }
+
+  .action-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    &.action-button-warning {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      color: white;
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+      }
+    }
+
+    &.action-button-danger {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      color: white;
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+      }
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+  .loading-spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid #f3f4f6;
+    border-top-color: #14b8a6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  p {
+    margin-top: 16px;
+    color: #6b7280;
+    font-size: 15px;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.detail-card {
+  background: white;
+  border-radius: 16px;
+  padding: 28px;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+  .card-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #f3f4f6;
+
+    .title-icon {
+      width: 28px;
+      height: 28px;
+      color: #14b8a6;
+    }
+
+    h2 {
+      flex: 1;
+      font-size: 22px;
+      font-weight: 700;
+      color: #111827;
+      margin: 0;
+    }
+
+    .status-tag {
+      font-size: 13px;
+      font-weight: 600;
+      padding: 6px 16px;
+    }
+  }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+
+    .info-item {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+
+      &.full-width {
+        grid-column: 1 / -1;
+      }
+
+      .info-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        font-weight: 500;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+
+        svg {
+          width: 18px;
+          height: 18px;
+          color: #14b8a6;
+        }
+      }
+
+      .info-value {
+        font-size: 15px;
+        font-weight: 500;
+        color: #111827;
+        padding: 12px 16px;
+        background: #f9fafb;
+        border-radius: 10px;
+        border: 1px solid #e5e7eb;
+
+        &.whitespace-pre-wrap {
+          white-space: pre-wrap;
+        }
+
+        .link-text {
+          color: #3b82f6;
+          text-decoration: none;
+          font-weight: 600;
+          transition: all 0.3s ease;
+
+          &:hover {
+            color: #2563eb;
+            text-decoration: underline;
+          }
+        }
+      }
+    }
+  }
+
+  .items-table {
+    .modern-table {
+      :deep(.el-table__header) {
+        th {
+          background: #f9fafb;
+          color: #374151;
+          font-weight: 600;
+          font-size: 13px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          border-bottom: 2px solid #e5e7eb;
+        }
+      }
+
+      :deep(.el-table__row) {
+        transition: all 0.3s ease;
+
+        &:hover {
+          background: #f0fdfa !important;
+        }
+
+        td {
+          border-bottom: 1px solid #f3f4f6;
+          padding: 14px 12px;
+        }
+      }
+    }
+
+    .done-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
+
+      svg {
+        width: 16px;
+        height: 16px;
+      }
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
+      }
+
+      &:active {
+        transform: translateY(0);
+      }
+    }
+  }
+
+  .summary-section {
+    margin-top: 28px;
+    display: flex;
+    justify-content: flex-end;
+
+    .summary-card {
+      min-width: 400px;
+      padding: 24px;
+      background: linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%);
+      border-radius: 12px;
+      border: 2px solid #14b8a6;
+
+      .summary-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px 0;
+        border-bottom: 1px solid #99f6e4;
+
+        &:last-child {
+          border-bottom: none;
+          padding-top: 16px;
+          margin-top: 8px;
+        }
+
+        &.discount-row {
+          .discount-value {
+            color: #dc2626;
+          }
+        }
+
+        &.total-row {
+          border-top: 2px solid #14b8a6;
+
+          .final-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #059669;
+          }
+        }
+
+        .summary-label {
+          font-size: 15px;
+          font-weight: 500;
+          color: #0f766e;
+        }
+
+        .summary-value {
+          font-size: 16px;
+          font-weight: 600;
+          color: #111827;
+        }
+      }
+    }
+  }
+}
+
+.price-highlight {
+  color: #059669;
+  font-weight: 600;
 }
 </style>
