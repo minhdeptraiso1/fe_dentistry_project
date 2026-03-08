@@ -13,8 +13,10 @@ export const authApi = {
   },
 
   // Logout
-  logout() {
-    return request.post<ApiResponse>("/auth/logout");
+  logout(refreshToken: string) {
+    return request.post<ApiResponse>("/auth/logout", null, {
+      params: { refreshToken },
+    });
   },
 
   // Get current user info
