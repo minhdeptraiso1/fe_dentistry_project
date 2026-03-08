@@ -34,9 +34,21 @@ export const useAuthStore = defineStore("auth", () => {
   const login = async (credentials: LoginRequest) => {
     try {
       loading.value = true;
+
+      // Clear old tokens BEFORE login attempt to prevent using stale tokens
+      token.value = null;
+      user.value = null;
+      tokenStorage.clearTokens();
+      tokenStorage.clearUser();
+
       const loginData: any = await authApi.login(credentials);
 
       console.log("Login response:", loginData);
+
+      // Check if login was successful
+      if (!loginData || !loginData.accessToken) {
+        throw new Error("Invalid login response - no access token");
+      }
 
       // Backend returns { accessToken, refreshToken } only
       // Save tokens
@@ -49,32 +61,58 @@ export const useAuthStore = defineStore("auth", () => {
       // Fetch user info from /users/me to get full user data (including id)
       await fetchUserInfo();
 
-      notification.success("Đăng nhập thành công!");
-      return true;
-    } catch (error) {
+      // Only show success message if we successfully fetched user info
+      if (user.value) {
+        notification.success("Đăng nhập thành công!");
+        return true;
+      } else {
+        throw new Error("Failed to fetch user information");
+      }
+    } catch (error: any) {
       console.error("Login error:", error);
-      notification.error(
-        "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin!",
-      );
-      return false;
+
+      // Clear any tokens that might have been set
+      token.value = null;
+      user.value = null;
+      tokenStorage.clearTokens();
+      tokenStorage.clearUser();
+
+      // Get error message from backend response
+      let errorMessage = "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin!";
+
+      if (error?.response?.data?.error?.message) {
+        errorMessage = error.response.data.error.message;
+      } else if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+
+      // Throw error instead of showing notification
+      // Let the LoginView component handle the display
+      throw new Error(errorMessage);
     } finally {
       loading.value = false;
     }
   };
 
   const logout = async () => {
+    // Call backend logout API but don't handle errors
+    // Just clear local data regardless of API result
     try {
-      await authApi.logout();
+      const refreshToken = tokenStorage.getRefreshToken();
+      if (refreshToken) {
+        await authApi.logout(refreshToken);
+      }
     } catch (error) {
-      console.error("Logout error:", error);
-    } finally {
-      // Clear local data
-      user.value = null;
-      token.value = null;
-      tokenStorage.clearTokens();
-      tokenStorage.clearUser();
-      notification.success("Đăng xuất thành công!");
+      // Ignore errors from backend, just log
+      console.log("Logout API call failed (ignored):", error);
     }
+
+    // Always clear local data
+    user.value = null;
+    token.value = null;
+    tokenStorage.clearTokens();
+    tokenStorage.clearUser();
+    notification.success("Đăng xuất thành công!");
   };
 
   const refreshToken = async () => {
@@ -112,13 +150,9 @@ export const useAuthStore = defineStore("auth", () => {
       tokenStorage.setUser(userData);
     } catch (error: any) {
       console.error("Fetch user info error:", error);
-      // Chỉ logout nếu là lỗi 401 (unauthorized)
-      // Không logout nếu là lỗi network hoặc 500
-      if (error?.response?.status === 401) {
-        logout();
-      } else {
-        console.warn("Could not fetch user info, but keeping session");
-      }
+      // Propagate error to caller (e.g., login function)
+      // Let the caller decide what to do with the error
+      throw error;
     }
   };
 
@@ -141,7 +175,15 @@ export const useAuthStore = defineStore("auth", () => {
       } else {
         // Chỉ gọi API nếu chưa có user data
         console.log("Fetching user info from API...");
-        await fetchUserInfo();
+        try {
+          await fetchUserInfo();
+        } catch (error: any) {
+          console.error("Failed to fetch user info during checkAuth:", error);
+          // If we can't fetch user info, clear tokens and logout
+          if (error?.response?.status === 401) {
+            logout();
+          }
+        }
       }
     }
   };

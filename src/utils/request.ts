@@ -203,6 +203,12 @@ service.interceptors.response.use(
           originalRequest.url?.includes("/auth/refresh") ||
           originalRequest.url?.includes("/auth/login")
         ) {
+          // Đối với login request, không hiện "session expired" dialog
+          // Chỉ reject error và để auth store xử lý message
+          if (originalRequest.url?.includes("/auth/login")) {
+            return Promise.reject(error);
+          }
+          // Đối với refresh request, clear auth và redirect
           clearAuthAndRedirect();
           return Promise.reject(error);
         }

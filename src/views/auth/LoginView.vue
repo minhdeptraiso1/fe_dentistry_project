@@ -177,6 +177,11 @@
               </div>
             </el-form-item>
 
+            <!-- Error Message Display - Same position as validation error -->
+            <div v-if="errorMessage" class="mt-1 mb-3">
+              <span class="text-xs text-red-600">{{ errorMessage }}</span>
+            </div>
+
             <div class="flex items-center justify-between">
               <el-checkbox v-model="rememberMe">
                 <span class="text-gray-700">Ghi nhớ đăng nhập</span>
@@ -237,6 +242,7 @@ const authStore = useAuthStore();
 const formRef = ref<FormInstance>();
 const loading = ref(false);
 const rememberMe = ref(false);
+const errorMessage = ref("");
 
 const formData = reactive({
   username: "",
@@ -259,6 +265,7 @@ const handleLogin = async () => {
   try {
     await formRef.value.validate();
     loading.value = true;
+    errorMessage.value = ""; // Clear previous error
 
     const success = await authStore.login({
       username: formData.username,
@@ -269,8 +276,10 @@ const handleLogin = async () => {
       const redirect = route.query.redirect as string;
       router.push(redirect || "/");
     }
-  } catch (error) {
-    console.error("Login validation failed:", error);
+  } catch (error: any) {
+    console.error("Login failed:", error);
+    errorMessage.value =
+      error.message || "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin!";
   } finally {
     loading.value = false;
   }

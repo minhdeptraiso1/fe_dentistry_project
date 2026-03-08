@@ -127,6 +127,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: "Quản lý chi phí", requiresAdmin: true },
       },
       {
+        path: "/users",
+        name: "Users",
+        component: () => import("@/views/users/UserListView.vue"),
+        meta: { title: "Quản lý người dùng", requiresAdmin: true },
+      },
+      {
         path: "/profile",
         name: "Profile",
         component: () => import("@/views/profile/ProfileView.vue"),
