@@ -186,6 +186,8 @@
     <MedicalRecordFormDialog
       v-model="dialogVisible"
       :record="selectedRecord"
+      :preset-patient-id="presetPatientId"
+      :appointment-id="appointmentId"
       @success="handleFormSuccess"
     />
   </div>
@@ -333,6 +335,8 @@ const authStore = useAuthStore();
 const loading = ref(false);
 const dialogVisible = ref(false);
 const selectedRecord = ref<MedicalRecord | null>(null);
+const presetPatientId = ref<string>();
+const appointmentId = ref<string>();
 
 const searchParams = reactive({
   keyword: "",
@@ -549,6 +553,34 @@ onMounted(async () => {
   loadPatients();
 
   loadMedicalRecords();
+
+  // Check if should open create dialog (from appointment)
+  const query = router.currentRoute.value.query;
+  if (query.create === "true" && query.patientId) {
+    // Set patient and appointment for dialog
+    presetPatientId.value = query.patientId as string;
+    if (query.appointmentId) {
+      appointmentId.value = query.appointmentId as string;
+    }
+    selectedRecord.value = null;
+    dialogVisible.value = true;
+  } else if (query.patientId || query.date) {
+    // Filter by patient and/or date when viewing from appointment
+    if (query.patientId) {
+      searchParams.patientId = query.patientId as string;
+    }
+    if (query.date) {
+      const dateStr = query.date as string;
+      searchParams.fromDate = new Date(dateStr).toISOString();
+      searchParams.toDate = new Date(
+        new Date(dateStr).getTime() + 24 * 60 * 60 * 1000,
+      ).toISOString();
+      // Set dateRange for UI
+      dateRange.value = [dateStr, dateStr];
+    }
+    // Reload with filters
+    loadMedicalRecords();
+  }
 });
 </script>
 

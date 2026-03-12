@@ -451,6 +451,66 @@ const LogoutIcon = () =>
     ],
   );
 
+const AppointmentIcon = () =>
+  h(
+    "svg",
+    {
+      xmlns: "http://www.w3.org/2000/svg",
+      fill: "none",
+      viewBox: "0 0 24 24",
+      "stroke-width": "2",
+      stroke: "currentColor",
+      class: "w-5 h-5",
+    },
+    [
+      h("path", {
+        "stroke-linecap": "round",
+        "stroke-linejoin": "round",
+        d: "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z",
+      }),
+    ],
+  );
+
+const CalendarCheckIcon = () =>
+  h(
+    "svg",
+    {
+      xmlns: "http://www.w3.org/2000/svg",
+      fill: "none",
+      viewBox: "0 0 24 24",
+      "stroke-width": "2",
+      stroke: "currentColor",
+      class: "w-5 h-5",
+    },
+    [
+      h("path", {
+        "stroke-linecap": "round",
+        "stroke-linejoin": "round",
+        d: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4",
+      }),
+    ],
+  );
+
+const ScheduleIcon = () =>
+  h(
+    "svg",
+    {
+      xmlns: "http://www.w3.org/2000/svg",
+      fill: "none",
+      viewBox: "0 0 24 24",
+      "stroke-width": "2",
+      stroke: "currentColor",
+      class: "w-5 h-5",
+    },
+    [
+      h("path", {
+        "stroke-linecap": "round",
+        "stroke-linejoin": "round",
+        d: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z",
+      }),
+    ],
+  );
+
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
@@ -479,6 +539,38 @@ const menuItems = computed(() => {
       label: "Phiếu khám",
       icon: h(MedicalRecordIcon),
     },
+  ];
+
+  // Add appointment menu based on role
+  if (authStore.isDoctor) {
+    items.push({
+      path: "/my-appointments",
+      route: { name: "MyAppointments" },
+      label: "Lịch hẹn của tôi",
+      icon: h(CalendarCheckIcon),
+    });
+  }
+
+  if (authStore.isAdmin || authStore.isCashier) {
+    items.push({
+      path: "/appointments",
+      route: { name: "Appointments" },
+      label: "Quản lý lịch khám",
+      icon: h(AppointmentIcon),
+    });
+  }
+
+  if (authStore.isAdmin) {
+    items.push({
+      path: "/doctor-capacities",
+      route: { name: "DoctorCapacities" },
+      label: "Phân công làm việc",
+      icon: h(ScheduleIcon),
+    });
+  }
+
+  // Continue with other menu items
+  items.push(
     {
       path: "/treatments",
       route: { name: "Treatments" },
@@ -521,7 +613,7 @@ const menuItems = computed(() => {
       label: "Báo cáo tồn kho",
       icon: h(InventoryIcon),
     },
-  ];
+  );
 
   if (authStore.isAdmin) {
     items.push({
