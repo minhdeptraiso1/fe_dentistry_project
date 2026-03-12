@@ -51,6 +51,31 @@ const routes: RouteRecordRaw[] = [
         meta: { title: "Chi tiết phiếu khám" },
       },
       {
+        path: "/appointments",
+        name: "Appointments",
+        component: () => import("@/views/appointments/AppointmentListView.vue"),
+        meta: { title: "Quản lý lịch khám" },
+      },
+      {
+        path: "/appointments/:id",
+        name: "AppointmentDetail",
+        component: () =>
+          import("@/views/appointments/AppointmentDetailView.vue"),
+        meta: { title: "Chi tiết lịch hẹn" },
+      },
+      {
+        path: "/my-appointments",
+        name: "MyAppointments",
+        component: () => import("@/views/appointments/MyAppointmentsView.vue"),
+        meta: { title: "Lịch hẹn của tôi" },
+      },
+      {
+        path: "/doctor-capacities",
+        name: "DoctorCapacities",
+        component: () => import("@/views/appointments/DoctorCapacityView.vue"),
+        meta: { title: "Phân công làm việc", requiresAdmin: true },
+      },
+      {
         path: "/treatments",
         name: "Treatments",
         component: () => import("@/views/treatments/TreatmentListView.vue"),
@@ -162,8 +187,9 @@ router.beforeEach(async (to, _from, next) => {
     ? `${to.meta.title} - Dental Clinic`
     : "Dental Clinic";
 
-  // ⚡ IMPORTANT: Load auth from cookie nếu chưa có (sau khi refresh)
-  if (!authStore.token && !authStore.user) {
+  // ⚡ The persist plugin automatically restores state from localStorage
+  // But we still need to check if we have a token but no user (edge case)
+  if (authStore.token && !authStore.user) {
     await authStore.checkAuth();
   }
 
@@ -174,9 +200,6 @@ router.beforeEach(async (to, _from, next) => {
       next({ name: "Login", query: { redirect: to.fullPath } });
       return;
     }
-
-    // checkAuth() đã load user rồi, không cần gọi lại fetchUserInfo
-    // Chỉ cần check role permission
 
     // Check role permission
     if (to.meta.roles && Array.isArray(to.meta.roles)) {

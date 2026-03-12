@@ -295,6 +295,8 @@ const CalendarIcon = () =>
 const props = defineProps<{
   modelValue: boolean;
   record?: MedicalRecord | null;
+  presetPatientId?: string;
+  appointmentId?: string;
 }>();
 
 const emit = defineEmits<{
@@ -409,6 +411,23 @@ watch(
       formData.note = record.note || "";
     } else {
       resetForm();
+    }
+  },
+  { immediate: true },
+);
+
+/**
+ * Watch presetPatientId to auto-select patient from appointment
+ */
+watch(
+  [() => props.presetPatientId, () => props.modelValue, patientOptions],
+  ([patientId, isVisible, patients]) => {
+    // When dialog opens, preset patient ID is provided, and patients are loaded
+    if (isVisible && patientId && !props.record && patients.length > 0) {
+      // Wait a bit for the select component to render
+      setTimeout(() => {
+        formData.patientId = patientId;
+      }, 100);
     }
   },
   { immediate: true },
