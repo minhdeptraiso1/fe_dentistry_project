@@ -82,8 +82,6 @@
         </div>
 
         <div class="flex items-center gap-4">
-          <ExpiryWarningButton />
-
           <el-dropdown trigger="click">
             <div
               class="flex items-center gap-4 cursor-pointer px-5 py-3 rounded-2xl hover:bg-gradient-to-r hover:from-teal-50 hover:to-cyan-50 transition-all border border-gray-200 shadow-sm hover:shadow-md hover:border-teal-200"
@@ -167,7 +165,6 @@ import { useAuthStore } from "@/stores/auth";
 import { useAppStore } from "@/stores/app";
 import { ElMessageBox } from "element-plus";
 import { Fold, Expand, ArrowDown } from "@element-plus/icons-vue";
-import ExpiryWarningButton from "@/components/ExpiryWarningButton.vue";
 import logoImg from "@/assets/logo.png";
 
 // Custom SVG Icons
@@ -520,114 +517,212 @@ const activeMenu = computed(() => route.path);
 
 // Menu items configuration
 const menuItems = computed(() => {
-  const items = [
-    {
+  const items = [];
+  const role = authStore.userRole;
+
+  // Dashboard - role-specific
+  if (role === "DOCTOR") {
+    items.push({
+      path: "/doctor",
+      route: { name: "DoctorDashboard" },
+      label: "Tổng quan",
+      icon: h(DashboardIcon),
+    });
+  } else if (role === "CASHIER") {
+    items.push({
+      path: "/cashier",
+      route: { name: "CashierDashboard" },
+      label: "Tổng quan",
+      icon: h(DashboardIcon),
+    });
+  } else if (role === "ADMIN") {
+    items.push({
+      path: "/admin",
+      route: { name: "AdminDashboard" },
+      label: "Tổng quan",
+      icon: h(DashboardIcon),
+    });
+  } else {
+    items.push({
       path: "/",
       route: { name: "Dashboard" },
       label: "Tổng quan",
       icon: h(DashboardIcon),
-    },
-    {
-      path: "/patients",
-      route: { name: "Patients" },
-      label: "Bệnh nhân",
-      icon: h(PatientIcon),
-    },
-    {
-      path: "/medical-records",
-      route: { name: "MedicalRecords" },
-      label: "Phiếu khám",
-      icon: h(MedicalRecordIcon),
-    },
-  ];
+    });
+  }
 
-  // Add appointment menu based on role
+  // ========== DOCTOR MENU ==========
   if (authStore.isDoctor) {
-    items.push({
-      path: "/my-appointments",
-      route: { name: "MyAppointments" },
-      label: "Lịch hẹn của tôi",
-      icon: h(CalendarCheckIcon),
-    });
+    items.push(
+      {
+        path: "/my-appointments",
+        route: { name: "MyAppointments" },
+        label: "Lịch hẹn của tôi",
+        icon: h(CalendarCheckIcon),
+      },
+      {
+        path: "/patients",
+        route: { name: "Patients" },
+        label: "Bệnh nhân",
+        icon: h(PatientIcon),
+      },
+      {
+        path: "/medical-records",
+        route: { name: "MedicalRecords" },
+        label: "Hồ sơ khám",
+        icon: h(MedicalRecordIcon),
+      },
+      {
+        path: "/treatment-plans",
+        route: { name: "TreatmentPlans" },
+        label: "Kế hoạch điều trị",
+        icon: h(PlanIcon),
+      },
+      {
+        path: "/prescriptions",
+        route: { name: "Prescriptions" },
+        label: "Đơn thuốc",
+        icon: h(PrescriptionIcon),
+      },
+      {
+        path: "/services",
+        route: { name: "Services" },
+        label: "Dịch vụ",
+        icon: h(ServiceIcon),
+      },
+    );
   }
 
-  if (authStore.isAdmin || authStore.isCashier) {
-    items.push({
-      path: "/appointments",
-      route: { name: "Appointments" },
-      label: "Quản lý lịch khám",
-      icon: h(AppointmentIcon),
-    });
+  // ========== CASHIER MENU ==========
+  if (authStore.isCashier) {
+    items.push(
+      {
+        path: "/appointments",
+        route: { name: "Appointments" },
+        label: "Quản lý lịch khám",
+        icon: h(AppointmentIcon),
+      },
+      {
+        path: "/patients",
+        route: { name: "Patients" },
+        label: "Bệnh nhân",
+        icon: h(PatientIcon),
+      },
+      {
+        path: "/invoices",
+        route: { name: "Invoices" },
+        label: "Hóa đơn",
+        icon: h(InvoiceIcon),
+      },
+      {
+        path: "/medicines",
+        route: { name: "Medicines" },
+        label: "Kho thuốc",
+        icon: h(MedicineIcon),
+      },
+      {
+        path: "/prescriptions",
+        route: { name: "Prescriptions" },
+        label: "Đơn thuốc",
+        icon: h(PrescriptionIcon),
+      },
+      {
+        path: "/inventory-report",
+        route: { name: "InventoryReport" },
+        label: "Báo cáo tồn kho",
+        icon: h(InventoryIcon),
+      },
+      {
+        path: "/services",
+        route: { name: "Services" },
+        label: "Dịch vụ",
+        icon: h(ServiceIcon),
+      },
+      {
+        path: "/expenses",
+        route: { name: "Expenses" },
+        label: "Chi phí",
+        icon: h(ExpenseIcon),
+      },
+    );
   }
 
+  // ========== ADMIN MENU ==========
   if (authStore.isAdmin) {
-    items.push({
-      path: "/doctor-capacities",
-      route: { name: "DoctorCapacities" },
-      label: "Phân công làm việc",
-      icon: h(ScheduleIcon),
-    });
-  }
-
-  // Continue with other menu items
-  items.push(
-    {
-      path: "/treatments",
-      route: { name: "Treatments" },
-      label: "Điều trị",
-      icon: h(TreatmentIcon),
-    },
-    {
-      path: "/services",
-      route: { name: "Services" },
-      label: "Dịch vụ",
-      icon: h(ServiceIcon),
-    },
-    {
-      path: "/treatment-plans",
-      route: { name: "TreatmentPlans" },
-      label: "Kế hoạch điều trị",
-      icon: h(PlanIcon),
-    },
-    {
-      path: "/invoices",
-      route: { name: "Invoices" },
-      label: "Hóa đơn",
-      icon: h(InvoiceIcon),
-    },
-    {
-      path: "/medicines",
-      route: { name: "Medicines" },
-      label: "Thuốc",
-      icon: h(MedicineIcon),
-    },
-    {
-      path: "/prescriptions",
-      route: { name: "Prescriptions" },
-      label: "Đơn thuốc",
-      icon: h(PrescriptionIcon),
-    },
-    {
-      path: "/inventory-report",
-      route: { name: "InventoryReport" },
-      label: "Báo cáo tồn kho",
-      icon: h(InventoryIcon),
-    },
-  );
-
-  if (authStore.isAdmin) {
-    items.push({
-      path: "/expenses",
-      route: { name: "Expenses" },
-      label: "Chi phí",
-      icon: h(ExpenseIcon),
-    });
-    items.push({
-      path: "/users",
-      route: { name: "Users" },
-      label: "Người dùng",
-      icon: h(UserIcon),
-    });
+    items.push(
+      {
+        path: "/users",
+        route: { name: "Users" },
+        label: "Người dùng",
+        icon: h(UserIcon),
+      },
+      {
+        path: "/appointments",
+        route: { name: "Appointments" },
+        label: "Lịch khám",
+        icon: h(AppointmentIcon),
+      },
+      {
+        path: "/doctor-capacities",
+        route: { name: "DoctorCapacities" },
+        label: "Phân công làm việc",
+        icon: h(ScheduleIcon),
+      },
+      {
+        path: "/patients",
+        route: { name: "Patients" },
+        label: "Bệnh nhân",
+        icon: h(PatientIcon),
+      },
+      {
+        path: "/medical-records",
+        route: { name: "MedicalRecords" },
+        label: "Hồ sơ khám",
+        icon: h(MedicalRecordIcon),
+      },
+      {
+        path: "/services",
+        route: { name: "Services" },
+        label: "Dịch vụ",
+        icon: h(ServiceIcon),
+      },
+      {
+        path: "/treatment-plans",
+        route: { name: "TreatmentPlans" },
+        label: "Kế hoạch điều trị",
+        icon: h(PlanIcon),
+      },
+      {
+        path: "/invoices",
+        route: { name: "Invoices" },
+        label: "Hóa đơn",
+        icon: h(InvoiceIcon),
+      },
+      {
+        path: "/medicines",
+        route: { name: "Medicines" },
+        label: "Thuốc",
+        icon: h(MedicineIcon),
+      },
+      {
+        path: "/prescriptions",
+        route: { name: "Prescriptions" },
+        label: "Đơn thuốc",
+        icon: h(PrescriptionIcon),
+      },
+      {
+        path: "/inventory-report",
+        route: { name: "InventoryReport" },
+        label: "Báo cáo tồn kho",
+        icon: h(InventoryIcon),
+      },
+      {
+        path: "/expenses",
+        route: { name: "Expenses" },
+        label: "Chi phí",
+        icon: h(ExpenseIcon),
+      },
+    );
   }
 
   return items;

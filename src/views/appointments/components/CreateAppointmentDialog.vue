@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    width="650px"
+    width="700px"
     :close-on-click-modal="false"
     :show-close="false"
     class="modern-dialog"
@@ -31,6 +31,7 @@
           :loading="patientLoading"
           style="width: 100%"
           size="large"
+          popper-class="modern-select-dropdown"
         >
           <template #prefix>
             <el-icon style="width: 16px; height: 16px; color: #9ca3af">
@@ -45,7 +46,7 @@
           >
             <div class="patient-option">
               <el-avatar
-                :size="32"
+                :size="36"
                 class="bg-gradient-to-br from-teal-500 to-teal-600"
               >
                 {{ patient.fullName?.[0] || "?" }}
@@ -71,6 +72,7 @@
           size="large"
           :disabled-date="disabledDate"
           @change="handleDateChange"
+          popper-class="modern-date-picker"
         >
           <template #prefix>
             <el-icon style="width: 16px; height: 16px; color: #9ca3af">
@@ -105,6 +107,7 @@
           clearable
           filterable
           :disabled="!form.workDate || !form.shift"
+          popper-class="modern-select-dropdown"
         >
           <template #prefix>
             <el-icon style="width: 16px; height: 16px; color: #9ca3af">
@@ -130,7 +133,7 @@
             <div class="doctor-option">
               <div class="doctor-option-left">
                 <el-avatar
-                  :size="32"
+                  :size="36"
                   class="bg-gradient-to-br from-blue-500 to-blue-600"
                 >
                   {{ doctor.doctorName?.[0] || "?" }}
@@ -342,6 +345,15 @@ watch(
   :deep(.el-dialog) {
     border-radius: 16px;
     overflow: hidden;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  :deep(.el-dialog__header) {
+    padding: 0;
+    margin: 0;
   }
 
   .dialog-header {
@@ -373,22 +385,60 @@ watch(
 
   :deep(.el-dialog__body) {
     padding: 24px;
+    max-height: 70vh;
+    overflow-y: auto;
   }
 
   :deep(.el-dialog__footer) {
-    padding: 16px 24px;
+    padding: 0;
     border-top: 1px solid #f3f4f6;
   }
 }
 
+// Fix dropdown popper positioning and z-index
+.modern-select-dropdown {
+  z-index: 9999 !important;
+
+  .el-select-dropdown__list {
+    max-height: 320px;
+    padding: 8px;
+  }
+
+  .el-select-dropdown__item {
+    padding: 4px 8px;
+    border-radius: 8px;
+    margin-bottom: 2px;
+    min-height: 56px;
+
+    &:hover {
+      background-color: #f0fdfa;
+    }
+
+    &.selected {
+      background-color: #ccfbf1;
+      font-weight: 500;
+    }
+  }
+}
+
+.modern-date-picker {
+  z-index: 9999 !important;
+}
+
 .modern-form {
   :deep(.el-form-item) {
-    margin-bottom: 20px;
+    margin-bottom: 24px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
 
     .el-form-item__label {
       font-weight: 600;
       color: #374151;
       font-size: 14px;
+      line-height: 1.5;
+      padding-bottom: 8px;
     }
 
     .el-input__wrapper {
@@ -442,21 +492,32 @@ watch(
 .patient-option {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 4px 0;
+  gap: 16px;
+  padding: 12px 8px;
+  min-height: 56px;
+  width: 100%;
+
+  .el-avatar {
+    flex-shrink: 0;
+  }
 
   .patient-details {
     flex: 1;
+    min-width: 0;
+    overflow: visible;
 
     .patient-name {
       font-weight: 500;
       color: #1f2937;
-      font-size: 14px;
+      font-size: 15px;
+      line-height: 1.4;
+      margin-bottom: 4px;
     }
 
     .patient-phone {
-      font-size: 12px;
-      color: #9ca3af;
+      font-size: 13px;
+      color: #6b7280;
+      line-height: 1.3;
     }
   }
 }
@@ -483,31 +544,108 @@ watch(
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  padding: 4px 0;
+  padding: 8px 4px;
+  min-height: 52px;
+  gap: 12px;
 
   .doctor-option-left {
     display: flex;
     align-items: center;
     gap: 12px;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+
+    .el-avatar {
+      flex-shrink: 0;
+    }
 
     .doctor-name {
       font-weight: 500;
       color: #1f2937;
+      font-size: 14px;
+      line-height: 1.4;
     }
+  }
+
+  .el-tag {
+    flex-shrink: 0;
   }
 }
 
 .radio-label {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+:deep(.el-radio-group) {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+
+  .el-radio-button {
+    flex: 1;
+
+    .el-radio-button__inner {
+      width: 100%;
+      border-radius: 10px;
+      padding: 14px 20px;
+      transition: all 0.3s ease;
+      font-weight: 500;
+      border: 2px solid #e5e7eb;
+    }
+
+    // Ca sáng - Morning (Cyan/Blue)
+    &:first-child {
+      .el-radio-button__inner {
+        &:hover {
+          background-color: #ecfeff;
+          border-color: #06b6d4;
+        }
+      }
+
+      &.is-active {
+        .el-radio-button__inner {
+          background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+          border-color: #06b6d4;
+          color: white;
+          box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+        }
+      }
+    }
+
+    // Ca chiều - Afternoon (Yellow/Orange)
+    &:last-child {
+      .el-radio-button__inner {
+        &:hover {
+          background-color: #fef3c7;
+          border-color: #f59e0b;
+        }
+      }
+
+      &.is-active {
+        .el-radio-button__inner {
+          background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+          border-color: #f59e0b;
+          color: white;
+          box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+        }
+      }
+    }
+  }
 }
 
 .form-hint {
   font-size: 12px;
   color: #9ca3af;
-  margin-top: 4px;
+  margin-top: 6px;
   font-style: italic;
+  line-height: 1.4;
+  display: block;
 }
 
 .dialog-footer {

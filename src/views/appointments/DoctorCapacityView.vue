@@ -158,7 +158,7 @@
             <el-option
               v-for="doctor in doctors"
               :key="doctor.id"
-              :label="doctor.fullName"
+              :label="doctor.name"
               :value="doctor.id"
             />
           </el-select>

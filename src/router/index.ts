@@ -21,8 +21,35 @@ const routes: RouteRecordRaw[] = [
       {
         path: "",
         name: "Dashboard",
+        redirect: (to) => {
+          // Redirect will be handled in navigation guard based on user role
+          return { name: "DefaultDashboard" };
+        },
+      },
+      {
+        path: "dashboard",
+        name: "DefaultDashboard",
         component: () => import("@/views/dashboard/DashboardView.vue"),
         meta: { title: "Tổng quan" },
+      },
+      // Role-specific dashboards
+      {
+        path: "/doctor",
+        name: "DoctorDashboard",
+        component: () => import("@/views/doctor/DoctorDashboardView.vue"),
+        meta: { title: "Dashboard Bác Sĩ", roles: ["DOCTOR"] },
+      },
+      {
+        path: "/cashier",
+        name: "CashierDashboard",
+        component: () => import("@/views/cashier/CashierDashboardView.vue"),
+        meta: { title: "Dashboard Thu Ngân", roles: ["CASHIER"] },
+      },
+      {
+        path: "/admin",
+        name: "AdminDashboard",
+        component: () => import("@/views/dashboard/DashboardView.vue"),
+        meta: { title: "Dashboard", roles: ["ADMIN"] },
       },
       {
         path: "/patients",
@@ -149,7 +176,7 @@ const routes: RouteRecordRaw[] = [
         path: "/expenses",
         name: "Expenses",
         component: () => import("@/views/expenses/ExpenseListView.vue"),
-        meta: { title: "Quản lý chi phí", requiresAdmin: true },
+        meta: { title: "Quản lý chi phí", roles: ["ADMIN", "CASHIER"] },
       },
       {
         path: "/users",
@@ -201,6 +228,21 @@ router.beforeEach(async (to, _from, next) => {
       return;
     }
 
+    // Redirect to role-specific dashboard
+    if (to.name === "Dashboard" || to.name === "DefaultDashboard") {
+      const role = authStore.userRole;
+      if (role === "DOCTOR") {
+        next({ name: "DoctorDashboard" });
+        return;
+      } else if (role === "CASHIER") {
+        next({ name: "CashierDashboard" });
+        return;
+      } else if (role === "ADMIN") {
+        next({ name: "AdminDashboard" });
+        return;
+      }
+    }
+
     // Check role permission
     if (to.meta.roles && Array.isArray(to.meta.roles)) {
       const hasPermission = to.meta.roles.includes(
@@ -208,15 +250,48 @@ router.beforeEach(async (to, _from, next) => {
       );
       if (!hasPermission) {
         ElMessage.error("Bạn không có quyền truy cập trang này");
-        next({ name: "Dashboard" });
+        // Redirect to role-specific dashboard instead of generic Dashboard
+        const role = authStore.userRole;
+        if (role === "DOCTOR") {
+          next({ name: "DoctorDashboard" });
+        } else if (role === "CASHIER") {
+          next({ name: "CashierDashboard" });
+        } else if (role === "ADMIN") {
+          next({ name: "AdminDashboard" });
+        } else {
+          next({ name: "DefaultDashboard" });
+        }
         return;
       }
     }
+
+    // Check admin-only routes
+    if (to.meta.requiresAdmin && !authStore.isAdmin) {
+      ElMessage.error("Chỉ quản trị viên mới có quyền truy cập");
+      const role = authStore.userRole;
+      if (role === "DOCTOR") {
+        next({ name: "DoctorDashboard" });
+      } else if (role === "CASHIER") {
+        next({ name: "CashierDashboard" });
+      } else {
+        next({ name: "DefaultDashboard" });
+      }
+      return;
+    }
   }
 
-  // Redirect to dashboard if already logged in
+  // Redirect to role-specific dashboard if already logged in
   if (to.meta.guest && authStore.isAuthenticated) {
-    next({ name: "Dashboard" });
+    const role = authStore.userRole;
+    if (role === "DOCTOR") {
+      next({ name: "DoctorDashboard" });
+    } else if (role === "CASHIER") {
+      next({ name: "CashierDashboard" });
+    } else if (role === "ADMIN") {
+      next({ name: "AdminDashboard" });
+    } else {
+      next({ name: "DefaultDashboard" });
+    }
     return;
   }
 
