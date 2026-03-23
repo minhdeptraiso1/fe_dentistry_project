@@ -6,6 +6,11 @@
         <h1 class="page-title">Quản lý bệnh nhân</h1>
         <p class="page-subtitle">Quản lý thông tin bệnh nhân</p>
       </div>
+
+      <el-button type="primary" @click="handleCreate" class="add-patient-btn">
+        <el-icon><Plus /></el-icon>
+        Thêm bệnh nhân
+      </el-button>
     </div>
 
     <!-- Search Section -->
@@ -31,6 +36,7 @@
               />
             </template>
           </el-input>
+
           <el-input
             v-model="searchParams.phone"
             placeholder="Số điện thoại..."
@@ -47,6 +53,7 @@
             </template>
           </el-input>
         </div>
+
         <div class="search-actions">
           <button @click="handleSearch" class="search-button">
             <component :is="SearchIcon" />
@@ -61,6 +68,7 @@
       <el-table :data="patients" v-loading="loading" class="modern-table">
         <el-table-column type="index" label="STT" width="60" align="center" />
         <el-table-column prop="patientCode" label="Mã BN" width="120" />
+
         <el-table-column label="Họ tên" min-width="180">
           <template #default="{ row }">
             <div class="flex items-center gap-3">
@@ -68,17 +76,19 @@
                 :size="36"
                 class="bg-gradient-to-br from-teal-500 to-teal-600"
               >
-                {{ row.fullName[0] }}
+                {{ row.fullName?.[0] || "B" }}
               </el-avatar>
               <span class="font-medium text-gray-900">{{ row.fullName }}</span>
             </div>
           </template>
         </el-table-column>
+
         <el-table-column prop="phone" label="Số điện thoại" width="140">
           <template #default="{ row }">
             <span class="text-gray-700">{{ row.phone }}</span>
           </template>
         </el-table-column>
+
         <el-table-column label="Giới tính" width="100" align="center">
           <template #default="{ row }">
             <el-tag
@@ -90,13 +100,15 @@
             </el-tag>
           </template>
         </el-table-column>
+
         <el-table-column label="Ngày sinh" width="120">
           <template #default="{ row }">
-            <span class="text-gray-600">{{
-              row.dob ? formatDate(row.dob) : "-"
-            }}</span>
+            <span class="text-gray-600">
+              {{ row.dob ? formatDate(row.dob) : "-" }}
+            </span>
           </template>
         </el-table-column>
+
         <el-table-column
           prop="address"
           label="Địa chỉ"
@@ -104,9 +116,10 @@
           show-overflow-tooltip
         >
           <template #default="{ row }">
-            <span class="text-gray-600">{{ row.address }}</span>
+            <span class="text-gray-600">{{ row.address || "-" }}</span>
           </template>
         </el-table-column>
+
         <el-table-column
           label="Thao tác"
           width="120"
@@ -140,15 +153,24 @@
         />
       </div>
     </div>
+
+    <!-- Add/Edit Dialog -->
+    <PatientFormDialog
+      v-model="dialogVisible"
+      :patient="selectedPatient"
+      @success="handleFormSuccess"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, h } from "vue";
 import { useRouter } from "vue-router";
+import { Plus } from "@element-plus/icons-vue";
 import { notification } from "@/utils/notification";
 import { patientApi } from "@/api/patient";
 import { formatDate } from "@/utils/date";
+import PatientFormDialog from "./components/PatientFormDialog.vue";
 import type { Patient } from "@/types";
 
 // Custom Icons
@@ -219,13 +241,14 @@ const EyeIcon = () =>
 
 const router = useRouter();
 const loading = ref(false);
+const dialogVisible = ref(false);
+const selectedPatient = ref<Patient | null>(null);
 
 const searchParams = reactive({
   keyword: "",
   phone: "",
 });
 
-// Pagination
 const currentPage = ref(1);
 const pageSize = ref(10);
 const totalElements = ref(0);
@@ -233,22 +256,28 @@ const totalPages = ref(0);
 
 const patients = ref<Patient[]>([]);
 
-/**
- * Load patients from backend
- */
+const handleCreate = () => {
+  selectedPatient.value = null;
+  dialogVisible.value = true;
+};
+
+const handleFormSuccess = () => {
+  dialogVisible.value = false;
+  loadPatients();
+};
+
 const loadPatients = async () => {
   try {
     loading.value = true;
     const pageData = await patientApi.search({
       ...searchParams,
-      page: currentPage.value - 1, // Backend uses 0-based page index
+      page: currentPage.value - 1,
       size: pageSize.value,
     });
 
-    // pageData is PageResponse<Patient> (axios interceptor unwrapped ApiResponse)
-    patients.value = pageData.content;
-    totalElements.value = pageData.totalElements;
-    totalPages.value = pageData.totalPages;
+    patients.value = pageData.content || [];
+    totalElements.value = pageData.totalElements || 0;
+    totalPages.value = pageData.totalPages || 0;
   } catch (error: any) {
     console.error("Load patients error:", error);
     notification.error(error?.message || "Không thể tải danh sách bệnh nhân");
@@ -257,34 +286,22 @@ const loadPatients = async () => {
   }
 };
 
-/**
- * Handle search
- */
 const handleSearch = () => {
-  currentPage.value = 1; // Reset to first page
+  currentPage.value = 1;
   loadPatients();
 };
 
-/**
- * Handle page change
- */
 const handlePageChange = (page: number) => {
   currentPage.value = page;
   loadPatients();
 };
 
-/**
- * Handle page size change
- */
 const handlePageSizeChange = (size: number) => {
   pageSize.value = size;
-  currentPage.value = 1; // Reset to first page
+  currentPage.value = 1;
   loadPatients();
 };
 
-/**
- * View patient detail
- */
 const viewDetail = (id: string) => {
   router.push(`/patients/${id}`);
 };
@@ -293,6 +310,7 @@ onMounted(() => {
   loadPatients();
 });
 </script>
+
 <style scoped lang="scss">
 .patient-list-container {
   padding: 0;
@@ -324,240 +342,9 @@ onMounted(() => {
     color: #6b7280;
     margin: 4px 0 0 0;
   }
-
-  .add-button {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 12px 24px;
-    background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
-    color: white;
-    border: none;
-    border-radius: 12px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(20, 184, 166, 0.3);
-
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(20, 184, 166, 0.4);
-      background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
-    }
-
-    &:active {
-      transform: translateY(0);
-    }
-
-    svg {
-      width: 20px;
-      height: 20px;
-    }
-  }
 }
 
-.search-card {
-  background: white;
-  border-radius: 16px;
-  padding: 20px;
-  margin-bottom: 24px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e5e7eb;
-
-  .search-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 16px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid #f3f4f6;
-
-    .search-header-icon {
-      color: #14b8a6;
-      width: 20px;
-      height: 20px;
-    }
-
-    .search-header-text {
-      font-size: 16px;
-      font-weight: 600;
-      color: #374151;
-    }
-  }
-
-  .search-content {
-    .search-row {
-      display: flex;
-      gap: 16px;
-      margin-bottom: 20px;
-
-      .search-input {
-        flex: 1;
-        min-width: 200px;
-
-        :deep(.el-input__wrapper) {
-          border-radius: 10px;
-          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-          transition: all 0.3s ease;
-
-          &:hover {
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
-          }
-
-          &.is-focus {
-            box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
-          }
-        }
-      }
-    }
-
-    .search-actions {
-      display: flex;
-      gap: 12px;
-
-      .search-button {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 10px 20px;
-        background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
-        color: white;
-        border: none;
-        border-radius: 10px;
-        font-size: 14px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: 0 2px 8px rgba(20, 184, 166, 0.3);
-
-        &:hover {
-          transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(20, 184, 166, 0.4);
-        }
-
-        &:active {
-          transform: translateY(0);
-        }
-
-        svg {
-          width: 18px;
-          height: 18px;
-        }
-      }
-    }
-  }
-}
-
-.table-card {
-  background: white;
-  border-radius: 16px;
-  padding: 20px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e5e7eb;
-
-  .modern-table {
-    :deep(.el-table__header) {
-      th {
-        background: #f9fafb;
-        color: #374151;
-        font-weight: 600;
-        font-size: 13px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        border-bottom: 2px solid #e5e7eb;
-      }
-    }
-
-    :deep(.el-table__row) {
-      transition: all 0.3s ease;
-
-      &:hover {
-        background: #f9fafb;
-        transform: scale(1.001);
-      }
-
-      td {
-        padding: 16px 0;
-        border-bottom: 1px solid #f3f4f6;
-      }
-    }
-  }
-
-  .action-buttons {
-    display: flex;
-    gap: 6px;
-    justify-content: center;
-    flex-wrap: nowrap;
-
-    .action-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 6px 12px;
-      border: none;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s ease;
-
-      &.action-btn-info {
-        background: #eff6ff;
-        color: #2563eb;
-
-        &:hover {
-          background: #dbeafe;
-          transform: translateY(-1px);
-        }
-      }
-
-      &.action-btn-primary {
-        background: #ecfdf5;
-        color: #14b8a6;
-
-        &:hover {
-          background: #d1fae5;
-          transform: translateY(-1px);
-        }
-      }
-
-      &.action-btn-danger {
-        background: #fef2f2;
-        color: #ef4444;
-
-        &:hover {
-          background: #fee2e2;
-          transform: translateY(-1px);
-        }
-      }
-    }
-  }
-
-  .pagination-wrapper {
-    margin-top: 20px;
-    padding-top: 20px;
-    border-top: 1px solid #f3f4f6;
-    display: flex;
-    justify-content: center;
-
-    :deep(.el-pagination) {
-      .btn-prev,
-      .btn-next,
-      .el-pager li {
-        border-radius: 8px;
-        font-weight: 500;
-
-        &:hover {
-          color: #14b8a6;
-        }
-
-        &.is-active {
-          background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
-          color: white;
-        }
-      }
-    }
-  }
+.add-patient-btn {
+  border-radius: 12px;
 }
 </style>
