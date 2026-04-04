@@ -156,3 +156,61 @@ body {
 .danger-confirm-dialog .el-message-box__btns .el-button--primary:hover {
   box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3) !important;
 }
+
+/* Realtime notification toast */
+.rt-notification-toast {
+  border-radius: 16px !important;
+  border: 1px solid #bfdbfe !important;
+  background: linear-gradient(135deg, #eff6ff 0%, #f0fdfa 100%) !important;
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.16) !important;
+  padding: 14px 14px 12px !important;
+  width: 360px !important;
+}
+
+.rt-notification-toast .el-notification__group {
+  margin-left: 0 !important;
+  width: 100%;
+}
+
+.rt-notification-toast .el-notification__title {
+  display: none !important;
+}
+
+.rt-notification-toast .el-notification__content {
+  margin: 0 !important;
+}
+
+.rt-toast-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rt-toast-top {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rt-toast-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #14b8a6, #0ea5e9);
+  box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.15);
+  flex-shrink: 0;
+}
+
+.rt-toast-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.rt-toast-message {
+  color: #334155;
+  font-size: 15px;
+  line-height: 1.45;
+  padding-left: 18px;
+}

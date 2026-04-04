@@ -1,4 +1,5 @@
 import { ElNotification } from "element-plus";
+import { h } from "vue";
 
 export const notification = {
   success(message: string, title: string = "Thành công") {
@@ -38,6 +39,23 @@ export const notification = {
       type: "info",
       duration: 3000,
       position: "top-right",
+    });
+  },
+
+  realtime(message: string, title: string = "Thông báo mới") {
+    ElNotification({
+      title: "",
+      message: h("div", { class: "rt-toast-body" }, [
+        h("div", { class: "rt-toast-top" }, [
+          h("span", { class: "rt-toast-dot" }),
+          h("span", { class: "rt-toast-title" }, title),
+        ]),
+        h("div", { class: "rt-toast-message" }, message),
+      ]),
+      duration: 5500,
+      position: "top-right",
+      customClass: "rt-notification-toast",
+      showClose: true,
     });
   },
 };
