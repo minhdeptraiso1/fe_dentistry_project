@@ -82,6 +82,77 @@
         </div>
 
         <div class="flex items-center gap-4">
+          <el-dropdown
+            v-model:visible="notificationDropdownVisible"
+            trigger="click"
+            placement="bottom-end"
+            class="notification-dropdown"
+          >
+            <button class="notification-bell" type="button">
+              <el-icon :size="20"><Bell /></el-icon>
+              <span
+                v-if="notificationStore.unreadCount > 0"
+                class="notification-badge"
+              >
+                {{
+                  notificationStore.unreadCount > 99
+                    ? "99+"
+                    : notificationStore.unreadCount
+                }}
+              </span>
+            </button>
+
+            <template #dropdown>
+              <div class="notification-menu">
+                <div class="notification-menu-header">
+                  <div class="title">Thông báo</div>
+                  <button
+                    class="mark-read-btn"
+                    type="button"
+                    @click="notificationStore.markAllAsRead"
+                    :disabled="notificationStore.unreadCount === 0"
+                  >
+                    Đọc hết
+                  </button>
+                </div>
+
+                <div
+                  v-if="notificationStore.latestItems.length"
+                  class="notification-items"
+                >
+                  <button
+                    v-for="item in notificationStore.latestItems"
+                    :key="item.id"
+                    type="button"
+                    class="notification-item"
+                    :class="{ unread: !item.read }"
+                    @click="handleOpenNotification(item.id)"
+                  >
+                    <div class="item-top">
+                      <div class="item-title-wrap">
+                        <span v-if="!item.read" class="item-unread-dot"></span>
+                        <div class="item-title">{{ item.title }}</div>
+                      </div>
+                      <div class="item-time">
+                        {{ formatNotificationTime(item.createdAt) }}
+                      </div>
+                    </div>
+                    <div class="item-message">{{ item.content }}</div>
+                  </button>
+                </div>
+                <div v-else class="notification-empty">Chưa có thông báo</div>
+
+                <button
+                  class="view-all-btn"
+                  type="button"
+                  @click="goToNotificationPage"
+                >
+                  Xem tất cả
+                </button>
+              </div>
+            </template>
+          </el-dropdown>
+
           <el-dropdown trigger="click">
             <div
               class="flex items-center gap-4 cursor-pointer px-5 py-3 rounded-2xl hover:bg-gradient-to-r hover:from-teal-50 hover:to-cyan-50 transition-all border border-gray-200 shadow-sm hover:shadow-md hover:border-teal-200"
@@ -159,12 +230,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, h } from "vue";
+import { computed, h, onBeforeUnmount, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 import { useAppStore } from "@/stores/app";
+import { useNotificationStore } from "@/stores/notification";
 import { ElMessageBox } from "element-plus";
-import { Fold, Expand, ArrowDown } from "@element-plus/icons-vue";
+import { Fold, Expand, ArrowDown, Bell } from "@element-plus/icons-vue";
 import logoImg from "@/assets/logo.png";
 
 // Custom SVG Icons
@@ -224,26 +296,6 @@ const MedicalRecordIcon = () =>
         "stroke-linecap": "round",
         "stroke-linejoin": "round",
         d: "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z",
-      }),
-    ],
-  );
-
-const TreatmentIcon = () =>
-  h(
-    "svg",
-    {
-      xmlns: "http://www.w3.org/2000/svg",
-      fill: "none",
-      viewBox: "0 0 24 24",
-      "stroke-width": "2",
-      stroke: "currentColor",
-      class: "w-5 h-5",
-    },
-    [
-      h("path", {
-        "stroke-linecap": "round",
-        "stroke-linejoin": "round",
-        d: "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z",
       }),
     ],
   );
@@ -512,6 +564,8 @@ const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
 const appStore = useAppStore();
+const notificationStore = useNotificationStore();
+const notificationDropdownVisible = ref(false);
 
 const activeMenu = computed(() => route.path);
 
@@ -569,7 +623,7 @@ const menuItems = computed(() => {
       {
         path: "/medical-records",
         route: { name: "MedicalRecords" },
-        label: "Hồ sơ khám",
+        label: "Phiếu khám",
         icon: h(MedicalRecordIcon),
       },
       {
@@ -695,7 +749,7 @@ const menuItems = computed(() => {
       {
         path: "/medical-records",
         route: { name: "MedicalRecords" },
-        label: "Hồ sơ khám",
+        label: "Phiếu khám",
         icon: h(MedicalRecordIcon),
       },
       {
@@ -782,11 +836,52 @@ const handleLogout = async () => {
       },
     );
     await authStore.logout();
+    notificationStore.stopRealtime();
     router.push({ name: "Login" });
   } catch (error) {
     // User cancelled
   }
 };
+
+const goToNotificationPage = () => {
+  notificationDropdownVisible.value = false;
+  if (route.name !== "Notifications") {
+    router.push({ name: "Notifications" });
+  }
+};
+
+const handleOpenNotification = async (id: string) => {
+  await notificationStore.markAsRead(id);
+  goToNotificationPage();
+};
+
+const formatNotificationTime = (value: string) => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+
+  return date.toLocaleString("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
+watch(
+  () => authStore.user?.id,
+  (userId) => {
+    if (userId && authStore.isAuthenticated) {
+      notificationStore.startRealtime(userId);
+    } else {
+      notificationStore.stopRealtime();
+    }
+  },
+  { immediate: true },
+);
+
+onBeforeUnmount(() => {
+  notificationStore.stopRealtime();
+});
 </script>
 
 <style scoped>
@@ -817,5 +912,178 @@ const handleLogout = async () => {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+.notification-bell {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  border: 1px solid #bfdbfe;
+  background: linear-gradient(135deg, #e0f2fe, #dbeafe);
+  color: #0f766e;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.notification-bell:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(14, 116, 144, 0.2);
+}
+
+.notification-badge {
+  position: absolute;
+  right: -6px;
+  top: -8px;
+  min-width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 0 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #fff;
+}
+
+.notification-menu {
+  width: 370px;
+  max-width: calc(100vw - 32px);
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.16);
+  overflow: hidden;
+}
+
+.notification-menu-header {
+  padding: 12px 14px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, #f0fdfa, #f0f9ff);
+}
+
+.notification-menu-header .title {
+  font-weight: 700;
+  color: #0f172a;
+  font-size: 15px;
+  letter-spacing: 0.2px;
+}
+
+.mark-read-btn {
+  border: none;
+  background: #e0f2fe;
+  color: #0c4a6e;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.mark-read-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.notification-items {
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.notification-item {
+  width: 100%;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  text-align: left;
+  padding: 10px 11px;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.notification-item:hover {
+  border-color: #99f6e4;
+  box-shadow: 0 10px 18px rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
+}
+
+.notification-item.unread {
+  background: linear-gradient(135deg, #f0fdfa, #f8fafc);
+  border-color: #99f6e4;
+}
+
+.item-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.item-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.item-unread-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #14b8a6;
+  flex-shrink: 0;
+}
+
+.item-title {
+  color: #0f172a;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.item-time {
+  color: #64748b;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.item-message {
+  color: #334155;
+  font-size: 14px;
+  line-height: 1.4;
+  margin-top: 5px;
+}
+
+.notification-empty {
+  padding: 32px 14px;
+  text-align: center;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.view-all-btn {
+  width: 100%;
+  border: none;
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  color: #0f766e;
+  font-weight: 600;
+  padding: 12px;
+  cursor: pointer;
+  border-top: 1px solid #e2e8f0;
+}
+
+.view-all-btn:hover {
+  background: #f1f5f9;
 }
 </style>

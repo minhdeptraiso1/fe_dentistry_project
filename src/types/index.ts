@@ -149,3 +149,4 @@ export * from "./invoice";
 export * from "./medicine";
 export * from "./prescription";
 export * from "./appointment";
+export * from "./notification";

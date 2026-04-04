@@ -203,6 +203,13 @@ const routes: RouteRecordRaw[] = [
         component: () => import("@/views/profile/ProfileView.vue"),
         meta: { title: "Thông tin cá nhân" },
       },
+      {
+        path: "/notifications",
+        name: "Notifications",
+        component: () =>
+          import("@/views/notifications/NotificationListView.vue"),
+        meta: { title: "Thông báo" },
+      },
     ],
   },
   {
