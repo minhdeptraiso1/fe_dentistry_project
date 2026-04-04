@@ -647,6 +647,24 @@ const menuItems = computed(() => {
     );
   }
 
+  // ========== PATIENT MENU ==========
+  if (authStore.isPatient) {
+    items.push(
+      {
+        path: "/patient",
+        route: { name: "PatientDashboard" },
+        label: "Hồ sơ của tôi",
+        icon: h(PatientIcon),
+      },
+      {
+        path: "/patient/appointments",
+        route: { name: "PatientAppointments" },
+        label: "Đặt lịch khám",
+        icon: h(AppointmentIcon),
+      },
+    );
+  }
+
   // ========== ADMIN MENU ==========
   if (authStore.isAdmin) {
     items.push(

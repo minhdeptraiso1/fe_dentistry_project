@@ -420,6 +420,7 @@ const getRoleTagType = (role: UserRole): string => {
     ADMIN: "danger",
     DOCTOR: "success",
     CASHIER: "warning",
+    PATIENT: "info",
   };
   return types[role] || "info";
 };

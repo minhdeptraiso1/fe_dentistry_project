@@ -35,7 +35,7 @@ export interface User {
   email: string;
   fullName?: string; // Optional - not in /users/me response
   phone?: string;
-  role: "ADMIN" | "DOCTOR" | "CASHIER"; // Match backend UserRole enum
+  role: "ADMIN" | "DOCTOR" | "CASHIER" | "PATIENT"; // Match backend UserRole enum
   enabled?: boolean; // From /users/me response
   avatar?: string;
   createdAt?: string;

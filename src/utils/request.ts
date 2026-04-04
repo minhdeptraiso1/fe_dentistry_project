@@ -19,6 +19,7 @@ const service: AxiosInstance = axios.create({
 
 // Flag để tránh multiple refresh calls
 let isRefreshing = false;
+let isRedirectingToLogin = false;
 let failedQueue: Array<{
   resolve: (value?: any) => void;
   reject: (reason?: any) => void;
@@ -106,11 +107,19 @@ const refreshTokenAndRetry = async (
 
 // Clear auth and redirect to login
 const clearAuthAndRedirect = async () => {
+  if (isRedirectingToLogin) {
+    return;
+  }
+  isRedirectingToLogin = true;
+
   // Lưu đường dẫn hiện tại để redirect sau khi login lại
   const currentPath = window.location.pathname + window.location.search;
 
   tokenStorage.clearTokens();
   tokenStorage.clearUser();
+  // Clear persisted auth store so router guard no longer treats user as logged in
+  localStorage.removeItem("dental-auth");
+  sessionStorage.removeItem("dental-auth");
 
   try {
     // Hiển thị dialog xác nhận
@@ -137,7 +146,7 @@ const clearAuthAndRedirect = async () => {
     currentPath && currentPath !== "/login"
       ? `/login?redirect=${encodeURIComponent(currentPath)}`
       : "/login";
-  window.location.href = loginUrl;
+  window.location.replace(loginUrl);
 };
 
 // Request interceptor
@@ -163,27 +172,45 @@ service.interceptors.request.use(
 service.interceptors.response.use(
   (response: AxiosResponse) => {
     const res = response.data;
+    const requestUrl = response.config?.url || "";
+    const isAuthEndpoint = requestUrl.includes("/auth/");
 
-    // Backend returns: { success: boolean, data: T, error: any }
-    // Check if request was successful
-    if (res.success === false) {
-      const errorMessage = res.error?.message || res.message || "Có lỗi xảy ra";
-      ElNotification({
-        title: "Lỗi",
-        message: errorMessage,
-        type: "error",
-        position: "top-right",
-      });
-      return Promise.reject(new Error(errorMessage));
+    // Support both wrapped response ({ success, data, error })
+    // and raw response (array/object directly).
+    if (res && typeof res === "object" && "success" in res) {
+      const wrapped = res as {
+        success?: boolean;
+        data?: unknown;
+        error?: { message?: string };
+        message?: string;
+      };
+
+      if (wrapped.success === false) {
+        const errorMessage =
+          wrapped.error?.message || wrapped.message || "Có lỗi xảy ra";
+        if (!isAuthEndpoint) {
+          ElNotification({
+            title: "Lỗi",
+            message: errorMessage,
+            type: "error",
+            position: "top-right",
+          });
+        }
+        return Promise.reject(new Error(errorMessage));
+      }
+
+      return wrapped.data;
     }
 
-    // Return the actual data (unwrap ApiResponse wrapper)
-    return res.data;
+    // Raw response from backend (already the payload)
+    return res;
   },
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & {
       _retry?: boolean;
     };
+    const requestUrl = originalRequest?.url || "";
+    const isAuthEndpoint = requestUrl.includes("/auth/");
 
     if (error.response) {
       const { status } = error.response;
@@ -224,23 +251,27 @@ service.interceptors.response.use(
       // Các lỗi khác
       switch (status) {
         case 404:
-          ElNotification({
-            title: "Không tìm thấy",
-            message: "Không tìm thấy tài nguyên",
-            type: "warning",
-            position: "top-right",
-          });
+          if (!isAuthEndpoint) {
+            ElNotification({
+              title: "Không tìm thấy",
+              message: "Không tìm thấy tài nguyên",
+              type: "warning",
+              position: "top-right",
+            });
+          }
           break;
         case 500:
-          ElNotification({
-            title: "Lỗi máy chủ",
-            message: "Vui lòng thử lại sau",
-            type: "error",
-            position: "top-right",
-          });
+          if (!isAuthEndpoint) {
+            ElNotification({
+              title: "Lỗi máy chủ",
+              message: "Vui lòng thử lại sau",
+              type: "error",
+              position: "top-right",
+            });
+          }
           break;
         default:
-          if (status !== 401 && status !== 403) {
+          if (status !== 401 && status !== 403 && !isAuthEndpoint) {
             // Đã xử lý 401 và 403 ở trên
             ElNotification({
               title: "Lỗi",

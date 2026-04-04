@@ -7,10 +7,10 @@
         <p class="page-subtitle">Quản lý thông tin bệnh nhân</p>
       </div>
 
-      <el-button type="primary" @click="handleCreate" class="add-patient-btn">
+      <button @click="handleCreate" class="add-button">
         <el-icon><Plus /></el-icon>
-        Thêm bệnh nhân
-      </el-button>
+        <span>Thêm bệnh nhân</span>
+      </button>
     </div>
 
     <!-- Search Section -->
@@ -122,7 +122,7 @@
 
         <el-table-column
           label="Thao tác"
-          width="120"
+          width="220"
           fixed="right"
           align="center"
         >
@@ -134,6 +134,13 @@
               >
                 <component :is="EyeIcon" />
                 <span>Chi tiết</span>
+              </button>
+              <button
+                @click="handleEdit(row)"
+                class="action-btn action-btn-primary"
+              >
+                <component :is="EditIcon" />
+                <span>Sửa</span>
               </button>
             </div>
           </template>
@@ -239,6 +246,26 @@ const EyeIcon = () =>
     ],
   );
 
+const EditIcon = () =>
+  h(
+    "svg",
+    {
+      xmlns: "http://www.w3.org/2000/svg",
+      fill: "none",
+      viewBox: "0 0 24 24",
+      "stroke-width": "2",
+      stroke: "currentColor",
+      class: "w-4 h-4",
+    },
+    [
+      h("path", {
+        "stroke-linecap": "round",
+        "stroke-linejoin": "round",
+        d: "M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10",
+      }),
+    ],
+  );
+
 const router = useRouter();
 const loading = ref(false);
 const dialogVisible = ref(false);
@@ -264,6 +291,11 @@ const handleCreate = () => {
 const handleFormSuccess = () => {
   dialogVisible.value = false;
   loadPatients();
+};
+
+const handleEdit = (patient: Patient) => {
+  selectedPatient.value = patient;
+  dialogVisible.value = true;
 };
 
 const loadPatients = async () => {
@@ -314,37 +346,249 @@ onMounted(() => {
 <style scoped lang="scss">
 .patient-list-container {
   padding: 0;
-}
 
-.page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 24px;
-  padding: 20px 24px;
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    padding: 20px 24px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 
-  .page-title {
-    font-size: 28px;
-    font-weight: 700;
-    background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin: 0;
-    line-height: 1.2;
+    .page-title {
+      font-size: 28px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin: 0 0 4px 0;
+    }
+
+    .page-subtitle {
+      font-size: 14px;
+      color: #6b7280;
+      margin: 0;
+    }
+
+    .add-button {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(20, 184, 166, 0.3);
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(20, 184, 166, 0.4);
+      }
+
+      &:active {
+        transform: translateY(0);
+      }
+    }
   }
 
-  .page-subtitle {
-    font-size: 14px;
-    color: #6b7280;
-    margin: 4px 0 0 0;
-  }
-}
+  .search-card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 
-.add-patient-btn {
-  border-radius: 12px;
+    .search-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid #f3f4f6;
+
+      .search-header-icon {
+        width: 24px;
+        height: 24px;
+        color: #14b8a6;
+      }
+
+      .search-header-text {
+        font-size: 18px;
+        font-weight: 600;
+        color: #111827;
+      }
+    }
+
+    .search-content {
+      .search-row {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 20px;
+
+        .search-input {
+          flex: 1;
+        }
+
+        :deep(.el-input) {
+          .el-input__wrapper {
+            border-radius: 10px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+
+            &:hover {
+              box-shadow: 0 2px 8px rgba(20, 184, 166, 0.15);
+            }
+
+            &.is-focus {
+              box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+            }
+          }
+
+          .el-input__prefix {
+            display: flex;
+            align-items: center;
+          }
+        }
+      }
+
+      .search-actions {
+        display: flex;
+        gap: 12px;
+
+        .search-button {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 12px 24px;
+          background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+          color: white;
+          border: none;
+          border-radius: 10px;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          box-shadow: 0 2px 8px rgba(20, 184, 166, 0.25);
+          height: 40px;
+
+          &:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(20, 184, 166, 0.35);
+          }
+
+          &:active {
+            transform: translateY(0);
+          }
+        }
+      }
+    }
+  }
+
+  .table-card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+    .modern-table {
+      :deep(.el-table__header-wrapper) {
+        th {
+          background: #f9fafb;
+          color: #374151;
+          font-weight: 600;
+          font-size: 13px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+      }
+
+      :deep(.el-table__row) {
+        transition: all 0.2s ease;
+
+        &:hover {
+          background: #f0fdfa !important;
+        }
+
+        td {
+          padding: 16px 0;
+          border-bottom: 1px solid #f3f4f6;
+        }
+      }
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 6px;
+      justify-content: center;
+      flex-wrap: nowrap;
+    }
+
+    .action-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &.action-btn-info {
+        background: #eff6ff;
+        color: #2563eb;
+
+        &:hover {
+          background: #dbeafe;
+          transform: translateY(-1px);
+        }
+      }
+
+      &.action-btn-primary {
+        background: #ecfdf5;
+        color: #14b8a6;
+
+        &:hover {
+          background: #d1fae5;
+          transform: translateY(-1px);
+        }
+      }
+    }
+  }
+
+  .pagination-wrapper {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #f3f4f6;
+    display: flex;
+    justify-content: center;
+
+    :deep(.el-pagination) {
+      .btn-prev,
+      .btn-next,
+      .el-pager li {
+        border-radius: 8px;
+        font-weight: 500;
+
+        &:hover {
+          color: #14b8a6;
+        }
+
+        &.is-active {
+          background: #14b8a6;
+          color: white;
+        }
+      }
+    }
+  }
 }
 </style>

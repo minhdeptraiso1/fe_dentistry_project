@@ -268,7 +268,20 @@ const handleDispense = async () => {
     await prescriptionApi.dispense(prescription.value.id, {
       note: note || undefined,
     });
-    ElMessage.success("Xuất thuốc thành công");
+
+    try {
+      await invoiceApi.createFromPrescription({
+        prescriptionId: prescription.value.id,
+      });
+      ElMessage.success("Xuất thuốc và tạo hóa đơn thành công");
+    } catch (invoiceError: any) {
+      console.error("Dispensed but failed to create invoice:", invoiceError);
+      ElMessage.warning(
+        invoiceError?.message ||
+          "Xuất thuốc thành công nhưng tạo hóa đơn thất bại",
+      );
+    }
+
     loadPrescription();
   } catch (error: any) {
     if (error !== "cancel") {

@@ -2,6 +2,7 @@ export const UserRole = {
   ADMIN: "ADMIN",
   DOCTOR: "DOCTOR",
   CASHIER: "CASHIER",
+  PATIENT: "PATIENT",
 } as const;
 
 export type UserRole = (typeof UserRole)[keyof typeof UserRole];
@@ -55,4 +56,5 @@ export const UserRoleLabels: Record<UserRole, string> = {
   [UserRole.ADMIN]: "Quản trị viên",
   [UserRole.DOCTOR]: "Bác sĩ",
   [UserRole.CASHIER]: "Nhân viên",
+  [UserRole.PATIENT]: "Bệnh nhân",
 };

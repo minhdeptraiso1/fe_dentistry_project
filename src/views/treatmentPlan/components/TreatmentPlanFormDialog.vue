@@ -113,13 +113,16 @@
             label="Tên dịch vụ"
             min-width="180"
           />
-          <el-table-column label="SL" width="90" align="center">
+          <el-table-column label="SL" width="96" align="center">
             <template #default="{ row }">
               <el-input-number
                 v-model="row.quantity"
                 :min="1"
                 :max="100"
+                :step="1"
+                :controls="false"
                 size="small"
+                class="quantity-number-input"
                 @change="calculateLineTotal(row)"
               />
             </template>
@@ -572,6 +575,9 @@ const handleMedicalRecordChange = () => {
 };
 
 const calculateLineTotal = (item: FormItem) => {
+  if (!item.quantity || item.quantity < 1) {
+    item.quantity = 1;
+  }
   const subtotal = (item.unitPrice || 0) * (item.quantity || 1);
   item.lineTotal = subtotal - (item.discountAmount || 0);
 };
@@ -582,6 +588,9 @@ const handleAddItem = () => {
 };
 
 const handleItemConfirm = (item: FormItem) => {
+  if (!item.quantity || item.quantity < 1) {
+    item.quantity = 1;
+  }
   calculateLineTotal(item);
   form.items.push(item);
 };
@@ -890,6 +899,14 @@ watch(
       .el-input__inner {
         text-align: right;
       }
+    }
+
+    :deep(.quantity-number-input .el-input__inner) {
+      text-align: center;
+      font-weight: 600;
+      color: #111827;
+      padding-left: 8px;
+      padding-right: 8px;
     }
   }
 

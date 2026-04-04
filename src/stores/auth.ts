@@ -19,6 +19,7 @@ export const useAuthStore = defineStore(
     const isAdmin = computed(() => user.value?.role === "ADMIN");
     const isDoctor = computed(() => user.value?.role === "DOCTOR");
     const isCashier = computed(() => user.value?.role === "CASHIER");
+    const isPatient = computed(() => user.value?.role === "PATIENT");
 
     // Actions
     const login = async (credentials: LoginRequest) => {
@@ -194,6 +195,7 @@ export const useAuthStore = defineStore(
       isAdmin,
       isDoctor,
       isCashier,
+      isPatient,
 
       // Actions
       login,

@@ -1,229 +1,159 @@
 <template>
-  <div
-    class="min-h-screen flex items-center justify-center p-5 relative overflow-hidden"
-  >
-    <!-- Background Image with Overlay -->
-    <div class="absolute inset-0 z-0">
-      <img
-        src="https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?w=1920&h=1080&fit=crop"
-        alt="Dental Clinic Background"
-        class="w-full h-full object-cover"
-      />
-      <div
-        class="absolute inset-0 bg-gradient-to-br from-blue-900/80 to-teal-800/80 backdrop-blur-sm"
-      ></div>
-    </div>
+  <div class="auth-page">
+    <div class="auth-bg"></div>
+    <div class="auth-orb auth-orb-1"></div>
+    <div class="auth-orb auth-orb-2"></div>
 
-    <!-- Login Card -->
-    <div
-      class="relative z-10 flex w-full max-w-5xl min-h-[650px] bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl overflow-hidden"
-    >
-      <!-- Left side - Visual Section -->
-      <div
-        class="flex-1 relative flex items-center justify-center p-12 overflow-hidden"
-        style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
-      >
-        <div class="absolute inset-0 opacity-10">
-          <div
-            class="absolute top-10 left-10 w-32 h-32 bg-white rounded-full blur-3xl"
-          ></div>
-          <div
-            class="absolute bottom-10 right-10 w-40 h-40 bg-white rounded-full blur-3xl"
-          ></div>
+    <div class="auth-shell">
+      <aside class="brand-panel">
+        <div class="brand-logo-wrap">
+          <img :src="logoImg" alt="Nha Khoa Việt Smile" class="brand-logo" />
+        </div>
+        <h1 class="brand-title">Nha khoa Việt Smile</h1>
+        <p class="brand-subtitle">
+          Quản lý lịch hẹn, bệnh án và điều trị trong một trải nghiệm mượt mà.
+        </p>
+        <div class="brand-points">
+          <div class="point-item">Lịch khám tập trung theo ca</div>
+          <div class="point-item">Theo dõi hồ sơ bệnh nhân tức thời</div>
+          <div class="point-item">Bảo mật theo vai trò người dùng</div>
+        </div>
+      </aside>
+
+      <section class="form-panel">
+        <div class="tab-switcher">
+          <button
+            @click="activeTab = 'login'"
+            :class="['tab-btn', { active: activeTab === 'login' }]"
+          >
+            Đăng nhập
+          </button>
+          <button
+            @click="activeTab = 'register'"
+            :class="['tab-btn', { active: activeTab === 'register' }]"
+          >
+            Đăng ký
+          </button>
         </div>
 
-        <div class="relative text-center z-10">
-          <!-- Logo Nha Khoa -->
-          <div class="mb-8 flex justify-center">
-            <img
-              :src="logoImg"
-              alt="Nha Khoa Việt Smile"
-              class="w-64 h-auto drop-shadow-2xl bg-white/95 p-6 rounded-2xl border-4 border-white/30"
-            />
-          </div>
-
-          <h1
-            class="text-4xl md:text-5xl font-bold text-white mb-4 leading-tight"
-          >
-            Hệ thống Quản lý<br />Nha khoa
-          </h1>
-          <p class="text-white/90 text-lg leading-relaxed max-w-md mx-auto">
-            Quản lý bệnh nhân, lịch hẹn và điều trị một cách hiệu quả và chuyên
-            nghiệp
+        <div v-if="activeTab === 'login'" class="panel-content">
+          <h2 class="panel-title">Xin chào, mời bạn đăng nhập</h2>
+          <p class="panel-subtitle">
+            Sử dụng tài khoản đã được cấp để truy cập hệ thống
           </p>
 
-          <!-- Trust Badges -->
-          <div
-            class="mt-10 flex items-center justify-center gap-6 text-white/80 text-sm"
-          >
-            <div class="flex items-center gap-2">
-              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fill-rule="evenodd"
-                  d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                  clip-rule="evenodd"
-                />
-              </svg>
-              <span>Bảo mật cao</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"
-                />
-              </svg>
-              <span>Dễ sử dụng</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Right side - Login Form -->
-      <div class="flex-1 flex items-center justify-center p-12 bg-white">
-        <div class="w-full max-w-md">
-          <!-- Header with Image -->
-          <div class="mb-10 text-center">
-            <div
-              class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mb-6 shadow-lg"
-            >
-              <svg
-                class="w-12 h-12 text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                />
-              </svg>
-            </div>
-            <h2 class="text-3xl font-bold text-gray-900 mb-2">Đăng nhập</h2>
-            <p class="text-gray-500">Chào mừng bạn quay trở lại!</p>
-          </div>
-
           <el-form
-            ref="formRef"
-            :model="formData"
-            :rules="rules"
+            ref="loginFormRef"
+            :model="loginData"
+            :rules="loginRules"
             @submit.prevent="handleLogin"
             size="large"
-            class="space-y-5"
+            class="auth-form"
           >
-            <!-- Username Field with Image -->
             <el-form-item prop="username">
-              <div class="relative w-full">
-                <div class="absolute left-4 top-1/2 -translate-y-1/2 z-10">
-                  <div
-                    class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center"
-                  >
-                    <svg
-                      class="w-5 h-5 text-blue-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                      />
-                    </svg>
-                  </div>
-                </div>
-                <el-input
-                  v-model="formData.username"
-                  placeholder="Tên đăng nhập"
-                  class="pl-16"
-                  style="padding-left: 60px"
-                />
-              </div>
+              <el-input
+                v-model="loginData.username"
+                placeholder="Tên đăng nhập"
+              />
             </el-form-item>
 
-            <!-- Password Field with Image -->
             <el-form-item prop="password">
-              <div class="relative w-full">
-                <div class="absolute left-4 top-1/2 -translate-y-1/2 z-10">
-                  <div
-                    class="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center"
-                  >
-                    <svg
-                      class="w-5 h-5 text-purple-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                      />
-                    </svg>
-                  </div>
-                </div>
-                <el-input
-                  v-model="formData.password"
-                  type="password"
-                  placeholder="Mật khẩu"
-                  class="pl-16"
-                  style="padding-left: 60px"
-                  show-password
-                  @keyup.enter="handleLogin"
-                />
-              </div>
+              <el-input
+                v-model="loginData.password"
+                type="password"
+                placeholder="Mật khẩu"
+                show-password
+                @keyup.enter="handleLogin"
+              />
             </el-form-item>
 
-            <!-- Error Message Display - Same position as validation error -->
-            <div v-if="errorMessage" class="mt-1 mb-3">
-              <span class="text-xs text-red-600">{{ errorMessage }}</span>
+            <div v-if="loginError" class="error-text">{{ loginError }}</div>
+
+            <div class="remember-row">
+              <el-checkbox v-model="rememberMe">Ghi nhớ đăng nhập</el-checkbox>
             </div>
 
-            <div class="flex items-center justify-between">
-              <el-checkbox v-model="rememberMe">
-                <span class="text-gray-700">Ghi nhớ đăng nhập</span>
-              </el-checkbox>
-            </div>
-
-            <el-form-item class="mb-0">
-              <el-button
-                type="primary"
-                :loading="loading"
-                @click="handleLogin"
-                class="w-full h-12 text-lg font-semibold"
-                style="
-                  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                  border: none;
-                "
-              >
-                <span
-                  v-if="!loading"
-                  class="flex items-center justify-center gap-2"
-                >
-                  <svg
-                    class="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"
-                    />
-                  </svg>
-                  Đăng nhập
-                </span>
-                <span v-else>Đang đăng nhập...</span>
-              </el-button>
-            </el-form-item>
+            <el-button
+              type="primary"
+              :loading="loginLoading"
+              @click="handleLogin"
+              class="submit-btn"
+            >
+              {{ loginLoading ? "Đang đăng nhập..." : "Đăng nhập" }}
+            </el-button>
           </el-form>
         </div>
-      </div>
+
+        <div v-else class="panel-content">
+          <h2 class="panel-title">Tạo tài khoản bệnh nhân</h2>
+          <p class="panel-subtitle">
+            Nhập đúng thông tin để hệ thống xác thực hồ sơ
+          </p>
+
+          <el-form
+            ref="registerFormRef"
+            :model="registerData"
+            :rules="registerRules"
+            @submit.prevent="handleRegister"
+            size="large"
+            class="auth-form"
+          >
+            <el-form-item prop="email">
+              <el-input v-model="registerData.email" placeholder="Email" />
+            </el-form-item>
+
+            <el-form-item prop="username">
+              <el-input
+                v-model="registerData.username"
+                placeholder="Tên đăng nhập"
+              />
+            </el-form-item>
+
+            <el-form-item prop="patientCode">
+              <el-input
+                v-model="registerData.patientCode"
+                placeholder="Mã bệnh nhân"
+              />
+            </el-form-item>
+
+            <el-form-item prop="password">
+              <el-input
+                v-model="registerData.password"
+                type="password"
+                placeholder="Mật khẩu"
+                show-password
+                @change="validatePasswordMatch"
+              />
+            </el-form-item>
+
+            <el-form-item prop="confirmPassword">
+              <el-input
+                v-model="registerData.confirmPassword"
+                type="password"
+                placeholder="Xác nhận mật khẩu"
+                show-password
+                @change="validatePasswordMatch"
+              />
+            </el-form-item>
+
+            <div v-if="registerError" class="error-text">
+              {{ registerError }}
+            </div>
+            <div v-if="passwordMismatchError" class="error-text">
+              {{ passwordMismatchError }}
+            </div>
+
+            <el-button
+              type="primary"
+              :loading="registerLoading"
+              @click="handleRegister"
+              class="submit-btn"
+            >
+              {{ registerLoading ? "Đang tạo tài khoản..." : "Tạo tài khoản" }}
+            </el-button>
+          </el-form>
+        </div>
+      </section>
     </div>
   </div>
 </template>
@@ -232,6 +162,8 @@
 import { ref, reactive } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
+import { authApi } from "@/api/auth";
+import { notification } from "@/utils/notification";
 import type { FormInstance } from "element-plus";
 import logoImg from "@/assets/logo.png";
 
@@ -239,17 +171,20 @@ const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
 
-const formRef = ref<FormInstance>();
-const loading = ref(false);
-const rememberMe = ref(false);
-const errorMessage = ref("");
+const activeTab = ref<"login" | "register">("login");
 
-const formData = reactive({
+// Login
+const loginFormRef = ref<FormInstance>();
+const loginLoading = ref(false);
+const rememberMe = ref(false);
+const loginError = ref("");
+
+const loginData = reactive({
   username: "",
   password: "",
 });
 
-const rules = {
+const loginRules = {
   username: [
     { required: true, message: "Vui lòng nhập tên đăng nhập", trigger: "blur" },
   ],
@@ -259,17 +194,79 @@ const rules = {
   ],
 };
 
+// Register
+const registerFormRef = ref<FormInstance>();
+const registerLoading = ref(false);
+const registerError = ref("");
+const passwordMismatchError = ref("");
+
+const registerData = reactive({
+  email: "",
+  username: "",
+  patientCode: "",
+  password: "",
+  confirmPassword: "",
+});
+
+const validatePasswordMatch = () => {
+  if (registerData.password && registerData.confirmPassword) {
+    if (registerData.password !== registerData.confirmPassword) {
+      passwordMismatchError.value = "Mật khẩu không trùng khớp!";
+    } else {
+      passwordMismatchError.value = "";
+    }
+  }
+};
+
+const registerRules = {
+  email: [
+    { required: true, message: "Vui lòng nhập email", trigger: "blur" },
+    {
+      type: "email",
+      message: "Email không hợp lệ",
+      trigger: ["blur", "change"],
+    },
+  ],
+  username: [
+    { required: true, message: "Vui lòng nhập tên đăng nhập", trigger: "blur" },
+    {
+      min: 3,
+      message: "Tên đăng nhập phải có ít nhất 3 ký tự",
+      trigger: "blur",
+    },
+  ],
+  patientCode: [
+    { required: true, message: "Vui lòng nhập mã bệnh nhân", trigger: "blur" },
+  ],
+  password: [
+    { required: true, message: "Vui lòng nhập mật khẩu", trigger: "blur" },
+    {
+      min: 6,
+      message: "Mật khẩu phải có ít nhất 6 ký tự",
+      trigger: "blur",
+    },
+  ],
+  confirmPassword: [
+    { required: true, message: "Vui lòng xác nhận mật khẩu", trigger: "blur" },
+    {
+      min: 6,
+      message: "Mật khẩu phải có ít nhất 6 ký tự",
+      trigger: "blur",
+    },
+  ],
+};
+
 const handleLogin = async () => {
-  if (!formRef.value) return;
+  if (!loginFormRef.value) return;
 
   try {
-    await formRef.value.validate();
-    loading.value = true;
-    errorMessage.value = ""; // Clear previous error
+    await loginFormRef.value.validate();
+    loginLoading.value = true;
+    loginError.value = "";
 
     const success = await authStore.login({
-      username: formData.username,
-      password: formData.password,
+      username: loginData.username,
+      password: loginData.password,
     });
 
     if (success) {
@@ -278,10 +275,317 @@ const handleLogin = async () => {
     }
   } catch (error: any) {
     console.error("Login failed:", error);
-    errorMessage.value =
+    loginError.value =
       error.message || "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin!";
   } finally {
-    loading.value = false;
+    loginLoading.value = false;
+  }
+};
+
+const handleRegister = async () => {
+  if (!registerFormRef.value) return;
+
+  try {
+    // Validate form
+    await registerFormRef.value.validate();
+
+    // Check password match
+    if (registerData.password !== registerData.confirmPassword) {
+      passwordMismatchError.value = "Mật khẩu không trùng khớp!";
+      return;
+    }
+
+    registerLoading.value = true;
+    registerError.value = "";
+
+    // Send only required fields to backend
+    const payload: any = {
+      username: registerData.username,
+      password: registerData.password,
+      email: registerData.email,
+      patientCode: registerData.patientCode,
+    };
+
+    await authApi.registerPatient(payload);
+
+    notification.success("Đăng ký thành công! Vui lòng đăng nhập.");
+    // Reset form and switch to login tab
+    registerFormRef.value.resetFields();
+    activeTab.value = "login";
+    loginData.username = registerData.username;
+    passwordMismatchError.value = "";
+  } catch (error: any) {
+    console.error("Register failed:", error);
+    registerError.value =
+      error?.response?.data?.error?.message ||
+      error?.response?.data?.message ||
+      error?.message ||
+      "Đăng ký thất bại. Vui lòng thử lại!";
+  } finally {
+    registerLoading.value = false;
   }
 };
 </script>
+
+<style scoped lang="scss">
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  background: #f4f7f9;
+}
+
+.auth-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      circle at 20% 15%,
+      rgba(20, 184, 166, 0.16),
+      transparent 40%
+    ),
+    radial-gradient(
+      circle at 80% 70%,
+      rgba(13, 148, 136, 0.18),
+      transparent 42%
+    ),
+    linear-gradient(130deg, #eaf6f6 0%, #f5fafb 45%, #f9fcfd 100%);
+}
+
+.auth-orb {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(2px);
+}
+
+.auth-orb-1 {
+  width: 420px;
+  height: 420px;
+  background: rgba(20, 184, 166, 0.1);
+  top: -120px;
+  right: -90px;
+}
+
+.auth-orb-2 {
+  width: 300px;
+  height: 300px;
+  background: rgba(8, 145, 178, 0.1);
+  bottom: -100px;
+  left: -80px;
+}
+
+.auth-shell {
+  --auth-fixed-height: 600px;
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 1100px;
+  height: var(--auth-fixed-height);
+  background: #ffffff;
+  border-radius: 28px;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(17, 24, 39, 0.16);
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+}
+
+.brand-panel {
+  height: 100%;
+  padding: 56px 48px;
+  color: #ffffff;
+  background: linear-gradient(145deg, #0f766e 0%, #0d9488 55%, #0891b2 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.brand-logo-wrap {
+  width: 148px;
+  padding: 14px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.94);
+  margin-bottom: 24px;
+}
+
+.brand-logo {
+  width: 100%;
+  display: block;
+}
+
+.brand-title {
+  margin: 0 0 12px;
+  font-size: 40px;
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.brand-subtitle {
+  margin: 0;
+  font-size: 17px;
+  color: rgba(255, 255, 255, 0.9);
+  max-width: 460px;
+}
+
+.brand-points {
+  margin-top: 30px;
+  display: grid;
+  gap: 10px;
+}
+
+.point-item {
+  font-size: 15px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.96);
+  padding-left: 18px;
+  position: relative;
+}
+
+.point-item::before {
+  content: "";
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  left: 0;
+  top: 8px;
+  background: #99f6e4;
+}
+
+.form-panel {
+  height: 100%;
+  padding: 42px 38px 36px;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+}
+
+.tab-switcher {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  background: #f1f5f9;
+  border-radius: 14px;
+  padding: 6px;
+  margin-bottom: 26px;
+}
+
+.tab-btn {
+  height: 42px;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #475569;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.tab-btn.active {
+  color: #ffffff;
+  background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+  box-shadow: 0 6px 14px rgba(20, 184, 166, 0.28);
+}
+
+.panel-content {
+  max-width: 430px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-title {
+  margin: 0;
+  font-size: 30px;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  color: #0f172a;
+}
+
+.panel-subtitle {
+  margin: 10px 0 20px;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+
+  :deep(.el-form-item) {
+    margin-bottom: 14px;
+  }
+
+  :deep(.el-input__wrapper) {
+    min-height: 46px;
+    border-radius: 11px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+    transition: all 0.2s ease;
+  }
+
+  :deep(.el-input__wrapper:hover) {
+    box-shadow: 0 2px 8px rgba(20, 184, 166, 0.16);
+  }
+
+  :deep(.el-input__wrapper.is-focus) {
+    box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.14);
+  }
+}
+
+.remember-row {
+  margin: 6px 0 14px;
+}
+
+.submit-btn {
+  margin-top: auto;
+  width: 100%;
+  height: 46px;
+  border: none;
+  border-radius: 11px;
+  font-size: 16px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+  box-shadow: 0 8px 16px rgba(20, 184, 166, 0.24);
+}
+
+.submit-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(20, 184, 166, 0.3);
+}
+
+.error-text {
+  margin: 4px 0 10px;
+  color: #dc2626;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+@media (max-width: 980px) {
+  .auth-shell {
+    height: auto;
+    grid-template-columns: 1fr;
+  }
+
+  .brand-panel {
+    padding: 34px 26px;
+  }
+
+  .brand-title {
+    font-size: 32px;
+  }
+
+  .form-panel {
+    padding: 30px 22px 24px;
+  }
+
+  .panel-content {
+    max-width: none;
+  }
+}
+</style>

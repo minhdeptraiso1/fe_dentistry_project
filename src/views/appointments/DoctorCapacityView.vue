@@ -139,6 +139,7 @@
       :title="isEdit ? 'Chỉnh sửa công suất' : 'Thiết lập công suất'"
       width="500px"
       :close-on-click-modal="false"
+      class="capacity-dialog"
     >
       <el-form
         ref="capacityFormRef"
@@ -146,6 +147,7 @@
         :rules="capacityRules"
         label-width="120px"
         label-position="left"
+        class="capacity-form"
       >
         <el-form-item label="Bác sĩ" prop="doctorId">
           <el-select
@@ -653,6 +655,143 @@ onMounted(() => {
 
       .filter-input {
         width: 100%;
+      }
+    }
+  }
+
+  :deep(.capacity-dialog) {
+    border-radius: 16px;
+    overflow: hidden;
+
+    .el-dialog__header {
+      margin-right: 0;
+      padding: 20px 24px 12px;
+      border-bottom: 1px solid #f3f4f6;
+
+      .el-dialog__title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #111827;
+      }
+    }
+
+    .el-dialog__headerbtn {
+      top: 18px;
+      right: 18px;
+
+      .el-dialog__close {
+        color: #9ca3af;
+        font-size: 18px;
+        transition: color 0.2s ease;
+      }
+
+      &:hover .el-dialog__close {
+        color: #14b8a6;
+      }
+    }
+
+    .el-dialog__body {
+      padding: 20px 24px 8px;
+    }
+
+    .capacity-form {
+      .el-form-item {
+        margin-bottom: 18px;
+
+        .el-form-item__label {
+          color: #4b5563;
+          font-weight: 500;
+        }
+      }
+
+      .el-input__wrapper,
+      .el-select .el-input__wrapper,
+      .el-date-editor.el-input .el-input__wrapper,
+      .el-input-number {
+        border-radius: 10px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        transition: all 0.25s ease;
+      }
+
+      .el-input__wrapper:hover,
+      .el-select .el-input__wrapper:hover,
+      .el-date-editor.el-input .el-input__wrapper:hover,
+      .el-input-number:hover {
+        box-shadow: 0 2px 8px rgba(20, 184, 166, 0.15);
+      }
+
+      .el-input__wrapper.is-focus,
+      .el-select .el-input__wrapper.is-focus,
+      .el-date-editor.el-input .el-input__wrapper.is-focus {
+        box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+      }
+
+      .el-radio-group {
+        display: flex;
+        gap: 24px;
+      }
+
+      .el-radio {
+        margin-right: 0;
+
+        .el-radio__input.is-checked .el-radio__inner {
+          border-color: #14b8a6;
+          background: #14b8a6;
+        }
+
+        .el-radio__input.is-checked + .el-radio__label {
+          color: #14b8a6;
+          font-weight: 600;
+        }
+
+        .el-radio__label {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          color: #4b5563;
+        }
+      }
+
+      .el-input-number {
+        width: 100%;
+      }
+    }
+
+    .el-dialog__footer {
+      padding: 12px 24px 20px;
+      border-top: 1px solid #f3f4f6;
+
+      .dialog-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+      }
+
+      .el-button {
+        height: 40px;
+        padding: 0 20px;
+        border-radius: 10px;
+        font-weight: 600;
+      }
+
+      .el-button:not(.el-button--primary) {
+        border-color: #d1d5db;
+        color: #6b7280;
+      }
+
+      .el-button--primary {
+        border: none;
+        background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+        box-shadow: 0 2px 8px rgba(20, 184, 166, 0.25);
+
+        &:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(20, 184, 166, 0.35);
+        }
+
+        &:active {
+          transform: translateY(0);
+        }
       }
     }
   }
