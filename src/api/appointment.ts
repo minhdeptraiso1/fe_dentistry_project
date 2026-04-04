@@ -23,6 +23,23 @@ export const appointmentApi = {
     return request.get<PageResponse<Appointment>>("/appointments", { params });
   },
 
+  // Get my appointments (PATIENT)
+  getMy(params?: { date?: string; page?: number; size?: number }) {
+    return request.get<PageResponse<Appointment>>("/appointments/my", {
+      params,
+    });
+  },
+
+  // Get my appointment detail (PATIENT)
+  getMyById(id: string) {
+    return request.get<Appointment>(`/appointments/my/${id}`);
+  },
+
+  // Create my appointment (PATIENT)
+  createMy(data: CreateAppointmentRequest) {
+    return request.post<Appointment>("/appointments/my", data);
+  },
+
   // Assign doctor to appointment
   assignDoctor(id: string, data: AssignDoctorRequest) {
     return request.post<Appointment>(`/appointments/${id}/assign`, data);

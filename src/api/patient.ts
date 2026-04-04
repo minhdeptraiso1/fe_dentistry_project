@@ -6,6 +6,13 @@ import type {
   PatientSearchParams,
   PageResponse,
 } from "@/types";
+import type {
+  PatientResponse,
+  InvoiceMyResponse,
+  InvoiceDetailResponse,
+  MedicalRecordResponse,
+  PrescriptionResponse,
+} from "@/types/patient";
 
 export const patientApi = {
   /**
@@ -48,5 +55,63 @@ export const patientApi = {
    */
   delete(id: string) {
     return request.delete<void>(`/patients/${id}`);
+  },
+
+  // ===== Patient Personal Endpoints =====
+
+  /**
+   * Get patient's own profile
+   * GET /patients/me
+   */
+  getMyProfile() {
+    return request.get<PatientResponse>("/patients/me");
+  },
+
+  /**
+   * Get patient's invoices
+   * GET /invoices/my
+   */
+  getMyInvoices() {
+    return request.get<InvoiceMyResponse[]>("/invoices/my");
+  },
+
+  /**
+   * Get patient's invoice detail
+   * GET /invoices/my/{id}
+   */
+  getMyInvoiceDetail(id: string) {
+    return request.get<InvoiceDetailResponse>(`/invoices/my/${id}`);
+  },
+
+  /**
+   * Get patient's medical records
+   * GET /medical-records/my
+   */
+  getMyMedicalRecords() {
+    return request.get<MedicalRecordResponse[]>("/medical-records/my");
+  },
+
+  /**
+   * Get patient's medical record detail
+   * GET /medical-records/my/{id}
+   */
+  getMyMedicalRecordDetail(id: string) {
+    return request.get<MedicalRecordResponse>(`/medical-records/my/${id}`);
+  },
+
+  /**
+   * Get patient's prescriptions
+   * GET /prescriptions/my
+   */
+  getMyPrescriptions() {
+    return request.get<PrescriptionResponse[]>("/prescriptions/my");
+  },
+
+  /**
+   * Get patient's prescription detail
+   * GET /prescriptions/my/{id}
+   */
+  getMyPrescriptionDetail(id: string) {
+    return request.get<PrescriptionResponse>(`/prescriptions/my/${id}`);
   },
 };

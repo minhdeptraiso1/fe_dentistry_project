@@ -46,6 +46,19 @@ const routes: RouteRecordRaw[] = [
         meta: { title: "Dashboard Thu Ngân", roles: ["CASHIER"] },
       },
       {
+        path: "/patient",
+        name: "PatientDashboard",
+        component: () => import("@/views/patient/PatientDashboardView.vue"),
+        meta: { title: "Hồ sơ bệnh nhân", roles: ["PATIENT"] },
+      },
+      {
+        path: "/patient/appointments",
+        name: "PatientAppointments",
+        component: () =>
+          import("@/views/patient/PatientAppointmentBookingView.vue"),
+        meta: { title: "Đặt lịch khám", roles: ["PATIENT"] },
+      },
+      {
         path: "/admin",
         name: "AdminDashboard",
         component: () => import("@/views/dashboard/DashboardView.vue"),
@@ -237,6 +250,9 @@ router.beforeEach(async (to, _from, next) => {
       } else if (role === "CASHIER") {
         next({ name: "CashierDashboard" });
         return;
+      } else if (role === "PATIENT") {
+        next({ name: "PatientDashboard" });
+        return;
       } else if (role === "ADMIN") {
         next({ name: "AdminDashboard" });
         return;
@@ -256,6 +272,8 @@ router.beforeEach(async (to, _from, next) => {
           next({ name: "DoctorDashboard" });
         } else if (role === "CASHIER") {
           next({ name: "CashierDashboard" });
+        } else if (role === "PATIENT") {
+          next({ name: "PatientDashboard" });
         } else if (role === "ADMIN") {
           next({ name: "AdminDashboard" });
         } else {
@@ -273,6 +291,8 @@ router.beforeEach(async (to, _from, next) => {
         next({ name: "DoctorDashboard" });
       } else if (role === "CASHIER") {
         next({ name: "CashierDashboard" });
+      } else if (role === "PATIENT") {
+        next({ name: "PatientDashboard" });
       } else {
         next({ name: "DefaultDashboard" });
       }
@@ -287,6 +307,8 @@ router.beforeEach(async (to, _from, next) => {
       next({ name: "DoctorDashboard" });
     } else if (role === "CASHIER") {
       next({ name: "CashierDashboard" });
+    } else if (role === "PATIENT") {
+      next({ name: "PatientDashboard" });
     } else if (role === "ADMIN") {
       next({ name: "AdminDashboard" });
     } else {

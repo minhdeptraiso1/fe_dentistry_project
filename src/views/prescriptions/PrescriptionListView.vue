@@ -212,6 +212,7 @@ import { ref, reactive, onMounted, h } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { prescriptionApi } from "@/api/prescription";
+import { invoiceApi } from "@/api/invoice";
 import { patientApi } from "@/api/patient";
 import { useAuthStore } from "@/stores/auth";
 import type { Prescription, PrescriptionStatus } from "@/types/prescription";
@@ -464,7 +465,20 @@ const handleDispense = async (prescription: Prescription) => {
     await prescriptionApi.dispense(prescription.id, {
       note: note || undefined,
     });
-    ElMessage.success("Xuất thuốc thành công");
+
+    try {
+      await invoiceApi.createFromPrescription({
+        prescriptionId: prescription.id,
+      });
+      ElMessage.success("Xuất thuốc và tạo hóa đơn thành công");
+    } catch (invoiceError: any) {
+      console.error("Dispensed but failed to create invoice:", invoiceError);
+      ElMessage.warning(
+        invoiceError?.message ||
+          "Xuất thuốc thành công nhưng tạo hóa đơn thất bại",
+      );
+    }
+
     handleSearch();
   } catch (error: any) {
     if (error !== "cancel") {

@@ -1,5 +1,6 @@
 import request from "@/utils/request";
 import type { LoginRequest, LoginResponse, User, ApiResponse } from "@/types";
+import type { RegisterPatientRequest } from "@/types/patient";
 
 export const authApi = {
   // Login
@@ -10,6 +11,11 @@ export const authApi = {
   // Register
   register(data: any) {
     return request.post<ApiResponse>("/auth/register", data);
+  },
+
+  // Register Patient
+  registerPatient(data: RegisterPatientRequest) {
+    return request.post<ApiResponse>("/auth/register-patient", data);
   },
 
   // Logout

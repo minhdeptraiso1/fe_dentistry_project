@@ -14,6 +14,7 @@ export interface Appointment {
   patientName?: string;
   doctorId?: string;
   doctorName?: string;
+  doctorUsername?: string;
   workDate: string; // LocalDate
   shift: WorkShift;
   status: AppointmentStatus;
@@ -38,6 +39,7 @@ export interface AssignDoctorRequest {
 export interface AppointmentSearchParams {
   date?: string; // YYYY-MM-DD
   doctorId?: string;
+  patientId?: string;
   status?: AppointmentStatus;
   shift?: WorkShift;
   page?: number;
