@@ -59,8 +59,8 @@ export const useNotificationStore = defineStore(
 
     const loadMyNotifications = async () => {
       try {
-        const response = await notificationApi.getMy();
-        const list = Array.isArray(response) ? response : [];
+        const response = await notificationApi.getMy(0, 10);
+        const list = response.content || [];
         items.value = list
           .map((item: any) => ({
             id: String(item.id),
