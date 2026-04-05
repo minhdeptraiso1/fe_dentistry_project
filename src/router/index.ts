@@ -40,6 +40,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: "Dashboard Bác Sĩ", roles: ["DOCTOR"] },
       },
       {
+        path: "/doctor/schedule-requests",
+        name: "DoctorScheduleRequests",
+        component: () => import("@/views/doctor/DoctorScheduleRequestView.vue"),
+        meta: { title: "Đăng ký lịch làm việc", roles: ["DOCTOR"] },
+      },
+      {
         path: "/cashier",
         name: "CashierDashboard",
         component: () => import("@/views/cashier/CashierDashboardView.vue"),
@@ -63,6 +69,12 @@ const routes: RouteRecordRaw[] = [
         name: "AdminDashboard",
         component: () => import("@/views/dashboard/DashboardView.vue"),
         meta: { title: "Dashboard", roles: ["ADMIN"] },
+      },
+      {
+        path: "/admin/doctor-schedule-requests",
+        name: "DoctorScheduleApprovals",
+        component: () => import("@/views/admin/DoctorScheduleApprovalView.vue"),
+        meta: { title: "Duyệt lịch bác sĩ", roles: ["ADMIN"] },
       },
       {
         path: "/patients",

@@ -20,34 +20,33 @@
 
     <!-- Shift Tabs -->
     <div class="tabs-card">
-      <el-tabs v-model="activeShift" @tab-change="loadMyAppointments">
-        <el-tab-pane label="Ca sáng" name="MORNING">
-          <template #label>
-            <div class="flex items-center gap-2">
-              <el-icon><Sunrise /></el-icon>
-              <span>Ca sáng</span>
-              <el-badge
-                v-if="morningCount > 0"
-                :value="morningCount"
-                class="ml-2"
-              />
-            </div>
-          </template>
-        </el-tab-pane>
-        <el-tab-pane label="Ca chiều" name="AFTERNOON">
-          <template #label>
-            <div class="flex items-center gap-2">
-              <el-icon><Sunset /></el-icon>
-              <span>Ca chiều</span>
-              <el-badge
-                v-if="afternoonCount > 0"
-                :value="afternoonCount"
-                class="ml-2"
-              />
-            </div>
-          </template>
-        </el-tab-pane>
-      </el-tabs>
+      <div class="shift-toggle">
+        <button
+          type="button"
+          class="shift-btn morning"
+          :class="{ active: activeShift === 'MORNING' }"
+          @click="activeShift = 'MORNING'"
+        >
+          <el-icon><Sunrise /></el-icon>
+          <span>Ca sáng</span>
+          <span v-if="morningCount > 0" class="shift-count">{{
+            morningCount
+          }}</span>
+        </button>
+
+        <button
+          type="button"
+          class="shift-btn afternoon"
+          :class="{ active: activeShift === 'AFTERNOON' }"
+          @click="activeShift = 'AFTERNOON'"
+        >
+          <el-icon><Sunset /></el-icon>
+          <span>Ca chiều</span>
+          <span v-if="afternoonCount > 0" class="shift-count">{{
+            afternoonCount
+          }}</span>
+        </button>
+      </div>
     </div>
 
     <!-- Appointments List -->
@@ -438,28 +437,74 @@ onMounted(() => {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     margin-bottom: 24px;
 
-    :deep(.el-tabs) {
-      .el-tabs__nav-wrap::after {
-        background-color: #f3f4f6;
-        height: 2px;
+    .shift-toggle {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .shift-btn {
+      min-height: 44px;
+      padding: 0 18px;
+      border: 2px solid #cbd5e1;
+      border-radius: 12px;
+      background: #fff;
+      color: #475569;
+      font-size: 16px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      .shift-count {
+        min-width: 20px;
+        height: 20px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 0 6px;
+        background: #e2e8f0;
+        color: #0f172a;
       }
 
-      .el-tabs__active-bar {
-        background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
-        height: 3px;
+      &.morning:hover {
+        border-color: #06b6d4;
+        color: #0891b2;
+        background: #ecfeff;
       }
 
-      .el-tabs__item {
-        font-weight: 500;
-        color: #6b7280;
+      &.morning.active {
+        border-color: #06b6d4;
+        background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+        color: #fff;
+        box-shadow: 0 4px 10px rgba(6, 182, 212, 0.25);
 
-        &:hover {
-          color: #14b8a6;
+        .shift-count {
+          background: rgba(255, 255, 255, 0.25);
+          color: #fff;
         }
+      }
 
-        &.is-active {
-          color: #14b8a6;
-          font-weight: 600;
+      &.afternoon:hover {
+        border-color: #f59e0b;
+        color: #b45309;
+        background: #fef3c7;
+      }
+
+      &.afternoon.active {
+        border-color: #f59e0b;
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        color: #fff;
+        box-shadow: 0 4px 10px rgba(245, 158, 11, 0.28);
+
+        .shift-count {
+          background: rgba(255, 255, 255, 0.25);
+          color: #fff;
         }
       }
     }
@@ -574,6 +619,17 @@ onMounted(() => {
   }
 
   @media (max-width: 768px) {
+    .tabs-card {
+      .shift-toggle {
+        width: 100%;
+      }
+
+      .shift-btn {
+        flex: 1;
+        justify-content: center;
+      }
+    }
+
     .appointments-grid {
       grid-template-columns: 1fr;
     }

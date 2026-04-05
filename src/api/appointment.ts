@@ -2,6 +2,7 @@ import request from "@/utils/request";
 import type {
   Appointment,
   CreateAppointmentRequest,
+  CreateFollowUpAppointmentRequest,
   AssignDoctorRequest,
   AppointmentSearchParams,
   PageResponse,
@@ -43,6 +44,11 @@ export const appointmentApi = {
   // Assign doctor to appointment
   assignDoctor(id: string, data: AssignDoctorRequest) {
     return request.post<Appointment>(`/appointments/${id}/assign`, data);
+  },
+
+  // Create follow-up appointment from an existing appointment
+  createFollowUp(id: string, data: CreateFollowUpAppointmentRequest) {
+    return request.post<Appointment>(`/appointments/${id}/follow-up`, data);
   },
 
   // Cancel appointment

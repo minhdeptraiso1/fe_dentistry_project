@@ -83,6 +83,7 @@
 
         <div class="flex items-center gap-4">
           <el-dropdown
+            ref="notificationDropdownRef"
             v-model:visible="notificationDropdownVisible"
             trigger="click"
             placement="bottom-end"
@@ -109,7 +110,7 @@
                   <button
                     class="mark-read-btn"
                     type="button"
-                    @click="notificationStore.markAllAsRead"
+                    @click.stop="handleMarkAllAndClose"
                     :disabled="notificationStore.unreadCount === 0"
                   >
                     Đọc hết
@@ -126,7 +127,7 @@
                     type="button"
                     class="notification-item"
                     :class="{ unread: !item.read }"
-                    @click="handleOpenNotification(item.id)"
+                    @click.stop="handleOpenNotification(item.id)"
                   >
                     <div class="item-top">
                       <div class="item-title-wrap">
@@ -145,7 +146,7 @@
                 <button
                   class="view-all-btn"
                   type="button"
-                  @click="goToNotificationPage"
+                  @click.stop="handleViewAllAndClose"
                 >
                   Xem tất cả
                 </button>
@@ -230,7 +231,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, h, onBeforeUnmount, ref, watch } from "vue";
+import { computed, h, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 import { useAppStore } from "@/stores/app";
@@ -566,6 +567,7 @@ const authStore = useAuthStore();
 const appStore = useAppStore();
 const notificationStore = useNotificationStore();
 const notificationDropdownVisible = ref(false);
+const notificationDropdownRef = ref<any>(null);
 
 const activeMenu = computed(() => route.path);
 
@@ -613,6 +615,12 @@ const menuItems = computed(() => {
         route: { name: "MyAppointments" },
         label: "Lịch hẹn của tôi",
         icon: h(CalendarCheckIcon),
+      },
+      {
+        path: "/doctor/schedule-requests",
+        route: { name: "DoctorScheduleRequests" },
+        label: "Đăng ký lịch làm việc",
+        icon: h(ScheduleIcon),
       },
       {
         path: "/patients",
@@ -741,6 +749,12 @@ const menuItems = computed(() => {
         icon: h(ScheduleIcon),
       },
       {
+        path: "/admin/doctor-schedule-requests",
+        route: { name: "DoctorScheduleApprovals" },
+        label: "Duyệt lịch bác sĩ",
+        icon: h(CalendarCheckIcon),
+      },
+      {
         path: "/patients",
         route: { name: "Patients" },
         label: "Bệnh nhân",
@@ -843,15 +857,36 @@ const handleLogout = async () => {
   }
 };
 
-const goToNotificationPage = () => {
+const closeNotificationDropdown = () => {
   notificationDropdownVisible.value = false;
+  notificationDropdownRef.value?.handleClose?.();
+  void nextTick(() => {
+    notificationDropdownVisible.value = false;
+  });
+};
+
+const goToNotificationPage = () => {
+  closeNotificationDropdown();
   if (route.name !== "Notifications") {
-    router.push({ name: "Notifications" });
+    void router.push({ name: "Notifications" });
   }
 };
 
-const handleOpenNotification = async (id: string) => {
-  await notificationStore.markAsRead(id);
+const handleOpenNotification = (id: string) => {
+  closeNotificationDropdown();
+  void notificationStore.markAsRead(id);
+  void notificationStore.loadMyNotifications();
+  if (route.name !== "Notifications") {
+    void router.push({ name: "Notifications" });
+  }
+};
+
+const handleMarkAllAndClose = async () => {
+  await notificationStore.markAllAsRead();
+  closeNotificationDropdown();
+};
+
+const handleViewAllAndClose = () => {
   goToNotificationPage();
 };
 

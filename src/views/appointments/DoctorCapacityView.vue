@@ -136,11 +136,20 @@
     <!-- Set Capacity Dialog -->
     <el-dialog
       v-model="capacityDialogVisible"
-      :title="isEdit ? 'Chỉnh sửa công suất' : 'Thiết lập công suất'"
-      width="500px"
+      width="650px"
       :close-on-click-modal="false"
+      :show-close="false"
       class="capacity-dialog"
     >
+      <template #header>
+        <div class="capacity-dialog-header">
+          <el-icon class="capacity-dialog-header-icon"><UserIcon /></el-icon>
+          <span class="capacity-dialog-header-title">
+            {{ isEdit ? "Cập nhật công suất" : "Thiết lập công suất" }}
+          </span>
+        </div>
+      </template>
+
       <el-form
         ref="capacityFormRef"
         :model="capacityForm"
@@ -155,12 +164,13 @@
             placeholder="Chọn bác sĩ"
             style="width: 100%"
             :disabled="isEdit"
+            size="large"
             filterable
           >
             <el-option
               v-for="doctor in doctors"
               :key="doctor.id"
-              :label="doctor.name"
+              :label="doctor.fullName || doctor.username"
               :value="doctor.id"
             />
           </el-select>
@@ -176,19 +186,28 @@
             style="width: 100%"
             :disabled="isEdit"
             :disabled-date="disabledDate"
+            size="large"
           />
         </el-form-item>
 
         <el-form-item label="Ca làm việc" prop="shift">
-          <el-radio-group v-model="capacityForm.shift" :disabled="isEdit">
-            <el-radio value="MORNING">
-              <el-icon><Sunrise /></el-icon>
-              Ca sáng
-            </el-radio>
-            <el-radio value="AFTERNOON">
-              <el-icon><Sunset /></el-icon>
-              Ca chiều
-            </el-radio>
+          <el-radio-group
+            v-model="capacityForm.shift"
+            :disabled="isEdit"
+            class="shift-radio-group"
+          >
+            <el-radio-button value="MORNING">
+              <span class="shift-label">
+                <el-icon><Sunrise /></el-icon>
+                <span>Ca sáng</span>
+              </span>
+            </el-radio-button>
+            <el-radio-button value="AFTERNOON">
+              <span class="shift-label">
+                <el-icon><Sunset /></el-icon>
+                <span>Ca chiều</span>
+              </span>
+            </el-radio-button>
           </el-radio-group>
         </el-form-item>
 
@@ -198,21 +217,26 @@
             :min="1"
             :max="50"
             style="width: 100%"
+            size="large"
           />
         </el-form-item>
       </el-form>
 
       <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="capacityDialogVisible = false">Hủy</el-button>
-          <el-button
-            type="primary"
+        <div class="dialog-footer">
+          <button class="cancel-button" @click="capacityDialogVisible = false">
+            <el-icon><Close /></el-icon>
+            <span>Hủy</span>
+          </button>
+          <button
+            class="submit-button"
+            :disabled="submitting"
             @click="handleSetCapacity"
-            :loading="submitting"
           >
-            {{ isEdit ? "Cập nhật" : "Thiết lập" }}
-          </el-button>
-        </span>
+            <el-icon v-if="!submitting"><Check /></el-icon>
+            <span>{{ isEdit ? "Cập nhật" : "Thiết lập" }}</span>
+          </button>
+        </div>
       </template>
     </el-dialog>
   </div>
@@ -224,10 +248,13 @@ import { ElMessage, type FormInstance } from "element-plus";
 import {
   Plus,
   Calendar,
+  User as UserIcon,
   Sunrise,
   Sunset,
   Search,
   Edit,
+  Close,
+  Check,
 } from "@element-plus/icons-vue";
 import { doctorCapacityApi } from "@/api/doctorCapacity";
 import { userApi } from "@/api/user";
@@ -235,14 +262,14 @@ import type {
   AvailableDoctor,
   SetDoctorShiftCapacityRequest,
   WorkShift,
-  User,
+  User as UserType,
 } from "@/types";
 
 // State
 const loading = ref(false);
 const submitting = ref(false);
 const availableDoctors = ref<AvailableDoctor[]>([]);
-const doctors = ref<User[]>([]);
+const doctors = ref<UserType[]>([]);
 const viewDate = ref(new Date().toISOString().split("T")[0]);
 const viewShift = ref<WorkShift>("MORNING");
 const capacityDialogVisible = ref(false);
@@ -498,22 +525,52 @@ onMounted(() => {
       }
 
       :deep(.el-radio-group) {
+        display: flex;
+        gap: 10px;
+
         .el-radio-button {
           .el-radio-button__inner {
-            border-radius: 10px;
-            transition: all 0.3s ease;
+            min-height: 42px;
+            padding: 0 18px;
+            border-radius: 12px;
+            border: 2px solid #cbd5e1;
+            background: #fff;
+            color: #475569;
+            font-size: 15px;
+            font-weight: 700;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+          }
 
-            &:hover {
-              color: #14b8a6;
-              border-color: #14b8a6;
+          &:first-child {
+            .el-radio-button__inner:hover {
+              border-color: #06b6d4;
+              color: #0891b2;
+              background: #ecfeff;
+            }
+
+            &.is-active .el-radio-button__inner {
+              background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+              border-color: #06b6d4;
+              color: #fff;
+              box-shadow: 0 4px 10px rgba(6, 182, 212, 0.25);
             }
           }
 
-          &.is-active {
-            .el-radio-button__inner {
-              background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
-              border-color: #14b8a6;
-              box-shadow: 0 2px 8px rgba(20, 184, 166, 0.25);
+          &:last-child {
+            .el-radio-button__inner:hover {
+              border-color: #f59e0b;
+              color: #b45309;
+              background: #fef3c7;
+            }
+
+            &.is-active .el-radio-button__inner {
+              background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+              border-color: #f59e0b;
+              color: #fff;
+              box-shadow: 0 4px 10px rgba(245, 158, 11, 0.28);
             }
           }
         }
@@ -658,140 +715,199 @@ onMounted(() => {
       }
     }
   }
+}
 
-  :deep(.capacity-dialog) {
+:deep(.capacity-dialog) {
+  .el-dialog {
+    max-width: calc(100vw - 32px);
+  }
+
+  .el-dialog {
     border-radius: 16px;
     overflow: hidden;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.16);
+  }
 
-    .el-dialog__header {
-      margin-right: 0;
-      padding: 20px 24px 12px;
-      border-bottom: 1px solid #f3f4f6;
+  .el-dialog__header {
+    margin-right: 0;
+    padding: 16px 16px 0;
+  }
 
-      .el-dialog__title {
-        font-size: 18px;
-        font-weight: 700;
-        color: #111827;
+  .capacity-dialog-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+    color: #fff;
+    padding: 16px 18px;
+  }
+
+  .capacity-dialog-header-icon {
+    font-size: 18px;
+  }
+
+  .capacity-dialog-header-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  .el-dialog__body {
+    padding: 18px 24px 8px;
+  }
+
+  .capacity-form {
+    .el-form-item {
+      margin-bottom: 18px;
+
+      .el-form-item__label {
+        color: #374151;
+        font-weight: 600;
+        font-size: 14px;
       }
     }
 
-    .el-dialog__headerbtn {
-      top: 18px;
-      right: 18px;
-
-      .el-dialog__close {
-        color: #9ca3af;
-        font-size: 18px;
-        transition: color 0.2s ease;
-      }
-
-      &:hover .el-dialog__close {
-        color: #14b8a6;
-      }
+    .el-input__wrapper,
+    .el-select .el-input__wrapper,
+    .el-date-editor.el-input .el-input__wrapper,
+    .el-input-number {
+      border-radius: 10px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      transition: all 0.25s ease;
     }
 
-    .el-dialog__body {
-      padding: 20px 24px 8px;
+    .el-input__wrapper:hover,
+    .el-select .el-input__wrapper:hover,
+    .el-date-editor.el-input .el-input__wrapper:hover,
+    .el-input-number:hover {
+      box-shadow: 0 2px 8px rgba(20, 184, 166, 0.15);
     }
 
-    .capacity-form {
-      .el-form-item {
-        margin-bottom: 18px;
+    .el-input__wrapper.is-focus,
+    .el-select .el-input__wrapper.is-focus,
+    .el-date-editor.el-input .el-input__wrapper.is-focus {
+      box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+    }
 
-        .el-form-item__label {
+    .shift-radio-group {
+      width: 100%;
+      display: flex;
+      gap: 12px;
+
+      .el-radio-button {
+        flex: 1;
+
+        .el-radio-button__inner {
+          width: 100%;
+          border-radius: 12px;
+          border: 2px solid #d1d5db;
+          min-height: 40px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 15px;
+          font-weight: 700;
           color: #4b5563;
-          font-weight: 500;
-        }
-      }
-
-      .el-input__wrapper,
-      .el-select .el-input__wrapper,
-      .el-date-editor.el-input .el-input__wrapper,
-      .el-input-number {
-        border-radius: 10px;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-        transition: all 0.25s ease;
-      }
-
-      .el-input__wrapper:hover,
-      .el-select .el-input__wrapper:hover,
-      .el-date-editor.el-input .el-input__wrapper:hover,
-      .el-input-number:hover {
-        box-shadow: 0 2px 8px rgba(20, 184, 166, 0.15);
-      }
-
-      .el-input__wrapper.is-focus,
-      .el-select .el-input__wrapper.is-focus,
-      .el-date-editor.el-input .el-input__wrapper.is-focus {
-        box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
-      }
-
-      .el-radio-group {
-        display: flex;
-        gap: 24px;
-      }
-
-      .el-radio {
-        margin-right: 0;
-
-        .el-radio__input.is-checked .el-radio__inner {
-          border-color: #14b8a6;
-          background: #14b8a6;
+          transition: all 0.2s ease;
+          box-shadow: none;
         }
 
-        .el-radio__input.is-checked + .el-radio__label {
-          color: #14b8a6;
-          font-weight: 600;
-        }
-
-        .el-radio__label {
+        .shift-label {
           display: inline-flex;
           align-items: center;
-          gap: 4px;
-          color: #4b5563;
+          gap: 7px;
         }
-      }
 
-      .el-input-number {
-        width: 100%;
+        &:first-child {
+          .el-radio-button__inner:hover {
+            border-color: #06b6d4;
+            color: #0891b2;
+            background: #ecfeff;
+          }
+
+          &.is-active .el-radio-button__inner {
+            color: #fff;
+            border-color: #06b6d4;
+            background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+            box-shadow: 0 6px 14px rgba(6, 182, 212, 0.28);
+          }
+        }
+
+        &:last-child {
+          .el-radio-button__inner:hover {
+            border-color: #f59e0b;
+            color: #b45309;
+            background: #fef3c7;
+          }
+
+          &.is-active .el-radio-button__inner {
+            color: #fff;
+            border-color: #f59e0b;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            box-shadow: 0 6px 14px rgba(245, 158, 11, 0.3);
+          }
+        }
       }
     }
 
-    .el-dialog__footer {
-      padding: 12px 24px 20px;
-      border-top: 1px solid #f3f4f6;
+    .el-input-number {
+      width: 100%;
+    }
 
-      .dialog-footer {
-        display: flex;
-        justify-content: flex-end;
-        gap: 12px;
+    .el-input-number .el-input__inner {
+      text-align: center;
+    }
+  }
+
+  .el-dialog__footer {
+    padding: 12px 24px 20px;
+    border-top: 1px solid #f3f4f6;
+
+    .dialog-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    .cancel-button,
+    .submit-button {
+      height: 42px;
+      padding: 0 20px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+
+    .cancel-button {
+      border: 1px solid #d1d5db;
+      background: #fff;
+      color: #6b7280;
+
+      &:hover {
+        background: #f9fafb;
+        color: #374151;
+      }
+    }
+
+    .submit-button {
+      border: none;
+      background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(20, 184, 166, 0.25);
+
+      &:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(20, 184, 166, 0.35);
       }
 
-      .el-button {
-        height: 40px;
-        padding: 0 20px;
-        border-radius: 10px;
-        font-weight: 600;
-      }
-
-      .el-button:not(.el-button--primary) {
-        border-color: #d1d5db;
-        color: #6b7280;
-      }
-
-      .el-button--primary {
-        border: none;
-        background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
-        box-shadow: 0 2px 8px rgba(20, 184, 166, 0.25);
-
-        &:hover {
-          transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(20, 184, 166, 0.35);
-        }
-
-        &:active {
-          transform: translateY(0);
-        }
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
       }
     }
   }

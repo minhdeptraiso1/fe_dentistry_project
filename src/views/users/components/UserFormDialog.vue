@@ -498,8 +498,8 @@ const handleFileChange = (event: Event) => {
       ElMessage.error("Vui lòng chọn file ảnh");
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      ElMessage.error("Kích thước ảnh không được vượt quá 5MB");
+    if (file.size > 20 * 1024 * 1024) {
+      ElMessage.error("Kích thước ảnh không được vượt quá 20MB");
       return;
     }
     const reader = new FileReader();

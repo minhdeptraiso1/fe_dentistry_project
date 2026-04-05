@@ -39,14 +39,18 @@
         </button>
       </div>
 
-      <div class="notification-list" v-if="filteredNotifications.length">
+      <div
+        v-loading="loading"
+        class="notification-list"
+        v-if="filteredNotifications.length"
+      >
         <button
           v-for="item in filteredNotifications"
           :key="item.id"
           type="button"
           class="notification-item"
           :class="{ unread: !item.read }"
-          @click="notificationStore.markAsRead(item.id)"
+          @click="handleMarkAsRead(item.id)"
         >
           <div class="item-top">
             <div class="title-group">
@@ -63,23 +67,91 @@
         <h3>Chưa có thông báo</h3>
         <p>Thông báo realtime sẽ hiển thị tại đây khi có sự kiện mới.</p>
       </div>
+
+      <div class="pagination-wrap" v-if="totalElements > 0">
+        <el-pagination
+          background
+          layout="total, sizes, prev, pager, next"
+          :current-page="currentPage"
+          :page-size="pageSize"
+          :page-sizes="[10, 20, 50]"
+          :total="totalElements"
+          @current-change="handlePageChange"
+          @size-change="handleSizeChange"
+        />
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { useNotificationStore } from "@/stores/notification";
+import { notificationApi } from "@/api/notification";
+import type { NotificationItem } from "@/types/notification";
 
 const notificationStore = useNotificationStore();
 const activeFilter = ref<"all" | "unread">("all");
+const loading = ref(false);
+const currentPage = ref(1);
+const pageSize = ref(10);
+const totalElements = ref(0);
+const pageItems = ref<NotificationItem[]>([]);
+
+const loadNotifications = async () => {
+  try {
+    loading.value = true;
+    const response = await notificationApi.getMy(
+      currentPage.value - 1,
+      pageSize.value,
+    );
+    pageItems.value = (response.content || []).map((item: any) => ({
+      id: String(item.id),
+      title: item.title || "Thông báo",
+      content: item.content || "Bạn có thông báo mới",
+      read: Boolean(item.read ?? item.isRead ?? false),
+      createdAt: item.createdAt || new Date().toISOString(),
+    }));
+    totalElements.value = response.totalElements || 0;
+  } finally {
+    loading.value = false;
+  }
+};
 
 const filteredNotifications = computed(() => {
   if (activeFilter.value === "unread") {
-    return notificationStore.unreadItems;
+    return pageItems.value.filter((item) => !item.read);
   }
-  return notificationStore.items;
+  return pageItems.value;
 });
+
+const handleMarkAsRead = async (id: string) => {
+  await notificationStore.markAsRead(id);
+  pageItems.value = pageItems.value.map((item) =>
+    item.id === id ? { ...item, read: true } : item,
+  );
+};
+
+const handlePageChange = (page: number) => {
+  currentPage.value = page;
+  loadNotifications();
+};
+
+const handleSizeChange = (size: number) => {
+  pageSize.value = size;
+  currentPage.value = 1;
+  loadNotifications();
+};
+
+watch(
+  () => notificationStore.items,
+  () => {
+    loadNotifications();
+  },
+  { deep: true },
+);
+
+onMounted(loadNotifications);
 
 const formatDateTime = (value: string) => {
   return new Date(value).toLocaleString("vi-VN", {
@@ -296,6 +368,14 @@ const formatDateTime = (value: string) => {
 .empty-state p {
   margin: 0;
   color: #64748b;
+}
+
+.pagination-wrap {
+  width: 100%;
+  margin-top: 24px;
+  padding-top: 10px;
+  display: flex;
+  justify-content: center;
 }
 
 @media (max-width: 768px) {

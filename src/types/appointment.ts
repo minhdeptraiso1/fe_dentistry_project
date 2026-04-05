@@ -7,17 +7,24 @@ export type AppointmentStatus =
   | "DONE"
   | "CANCELLED";
 
+export type AppointmentPriority = "NORMAL" | "URGENT";
+
 export interface Appointment {
   id: string;
   appointmentCode: string;
   patientId: string;
+  patientCode?: string;
   patientName?: string;
   doctorId?: string;
   doctorName?: string;
   doctorUsername?: string;
+  parentId?: string;
+  sequenceNo?: number;
   workDate: string; // LocalDate
+  actualDate?: string;
   shift: WorkShift;
   status: AppointmentStatus;
+  priority?: AppointmentPriority;
   note?: string;
   cancellationNote?: string;
   createdAt: string;
@@ -34,6 +41,13 @@ export interface CreateAppointmentRequest {
 
 export interface AssignDoctorRequest {
   doctorId: string;
+}
+
+export interface CreateFollowUpAppointmentRequest {
+  workDate: string;
+  shift: WorkShift;
+  doctorId?: string;
+  note?: string;
 }
 
 export interface AppointmentSearchParams {
@@ -60,4 +74,29 @@ export interface SetDoctorShiftCapacityRequest {
   workDate: string; // YYYY-MM-DD
   shift: WorkShift;
   maxPatients: number;
+}
+
+export type ScheduleRequestStatus = "PENDING" | "APPROVED" | "REJECTED";
+
+export interface CreateDoctorScheduleRequest {
+  workDate: string; // YYYY-MM-DD
+  shift: WorkShift;
+  maxPatients: number;
+}
+
+export interface DoctorScheduleRequestItem {
+  id: string;
+  doctorId: string;
+  doctorName: string;
+  workDate: string;
+  shift: WorkShift;
+  maxPatients: number;
+  status: ScheduleRequestStatus;
+}
+
+export interface DoctorScheduleRequestSearchParams {
+  date?: string; // YYYY-MM-DD
+  shift?: WorkShift;
+  doctorId?: string;
+  status?: ScheduleRequestStatus;
 }

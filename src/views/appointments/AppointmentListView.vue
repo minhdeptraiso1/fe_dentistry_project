@@ -24,7 +24,7 @@
             v-model="searchParams.date"
             type="date"
             placeholder="Chọn ngày khám"
-            class="search-input"
+            class="search-input search-input-date"
             format="DD/MM/YYYY"
             value-format="YYYY-MM-DD"
             clearable
@@ -33,7 +33,7 @@
           <el-select
             v-model="searchParams.shift"
             placeholder="Chọn ca"
-            class="search-input"
+            class="search-input search-input-shift"
             clearable
             @clear="loadAppointments"
           >
@@ -43,7 +43,7 @@
           <el-select
             v-model="searchParams.status"
             placeholder="Trạng thái"
-            class="search-input"
+            class="search-input search-input-status"
             clearable
             @clear="loadAppointments"
           >
@@ -433,6 +433,22 @@ onMounted(() => {
 
         .search-input {
           flex: 1;
+          min-width: 180px;
+        }
+
+        .search-input-date {
+          flex: 1.35;
+          min-width: 280px;
+        }
+
+        .search-input-shift {
+          flex: 0.8;
+          min-width: 170px;
+        }
+
+        .search-input-status {
+          flex: 1;
+          min-width: 190px;
         }
 
         :deep(.el-input) {
@@ -515,6 +531,32 @@ onMounted(() => {
 
           &:active {
             transform: translateY(0);
+          }
+        }
+      }
+
+      @media (max-width: 1024px) {
+        .search-row {
+          flex-wrap: wrap;
+
+          .search-input,
+          .search-input-date,
+          .search-input-shift,
+          .search-input-status {
+            flex: 1 1 calc(50% - 8px);
+            min-width: 220px;
+          }
+        }
+      }
+
+      @media (max-width: 640px) {
+        .search-row {
+          .search-input,
+          .search-input-date,
+          .search-input-shift,
+          .search-input-status {
+            flex: 1 1 100%;
+            min-width: 100%;
           }
         }
       }

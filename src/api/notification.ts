@@ -1,9 +1,16 @@
 import request from "@/utils/request";
 import type { NotificationItem } from "@/types/notification";
+import type { PageResponse } from "@/types";
 
 export const notificationApi = {
-  getMy() {
-    return request.get<NotificationItem[]>("/notifications/my");
+  getMy(page: number = 0, size: number = 10) {
+    return request.get<PageResponse<NotificationItem>>("/notifications/my", {
+      params: {
+        page,
+        size,
+        sort: "createdAt,desc",
+      },
+    });
   },
 
   getUnreadCount() {
