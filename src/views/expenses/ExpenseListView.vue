@@ -220,6 +220,7 @@
 import { ref, reactive, computed, onMounted, h } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { expenseApi } from "@/api/expense";
+import ExcelJS from "exceljs";
 import {
   type Expense,
   ExpenseCategory,
@@ -397,11 +398,34 @@ const dialogVisible = ref(false);
 const expenses = ref<Expense[]>([]);
 const currentExpense = ref<Expense | null>(null);
 
+const getCurrentMonthRange = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+
+  const formatYMD = (date: Date) => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  };
+
+  return {
+    fromDate: formatYMD(firstDay),
+    toDate: formatYMD(lastDay),
+  };
+};
+
+const defaultMonthRange = getCurrentMonthRange();
+
 const filterForm = reactive({
   keyword: "",
   category: undefined as ExpenseCategory | undefined,
-  fromDate: "",
-  toDate: "",
+  fromDate: defaultMonthRange.fromDate,
+  toDate: defaultMonthRange.toDate,
 });
 
 const pagination = reactive({
@@ -473,8 +497,9 @@ const handleSearch = () => {
 const handleReset = () => {
   filterForm.keyword = "";
   filterForm.category = undefined;
-  filterForm.fromDate = "";
-  filterForm.toDate = "";
+  const currentMonthRange = getCurrentMonthRange();
+  filterForm.fromDate = currentMonthRange.fromDate;
+  filterForm.toDate = currentMonthRange.toDate;
   handleSearch();
 };
 
@@ -516,8 +541,128 @@ const handleSuccess = () => {
 };
 
 const handleExport = () => {
-  ElMessage.info("Chức năng xuất Excel đang được phát triển");
-  // TODO: Implement export functionality
+  exportExpensesToExcel();
+};
+
+const exportExpensesToExcel = async () => {
+  exporting.value = true;
+
+  try {
+    const response = await expenseApi.search({
+      keyword: filterForm.keyword || undefined,
+      category: filterForm.category,
+      fromDate: filterForm.fromDate || undefined,
+      toDate: filterForm.toDate || undefined,
+      page: 0,
+      size: Math.max(pagination.total || 0, 1000),
+    });
+
+    const exportRows = response.content || [];
+
+    if (exportRows.length === 0) {
+      ElMessage.warning("Không có dữ liệu để xuất Excel");
+      return;
+    }
+
+    const fromLabel = filterForm.fromDate || "-";
+    const toLabel = filterForm.toDate || "-";
+    const title = `Thống Kê chi Phí Từ Ngày ${fromLabel} đến ${toLabel}`;
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("ThongKeChiPhi");
+
+    worksheet.columns = [
+      { width: 8 },
+      { width: 14 },
+      { width: 14 },
+      { width: 35 },
+      { width: 14 },
+      { width: 14 },
+      { width: 28 },
+      { width: 22 },
+    ];
+
+    worksheet.mergeCells("A1:H1");
+    const titleCell = worksheet.getCell("A1");
+    titleCell.value = title;
+    titleCell.font = { bold: true, size: 18, name: "Calibri" };
+    titleCell.alignment = { horizontal: "left", vertical: "middle" };
+
+    const headerRow = worksheet.addRow([]);
+    headerRow.commit();
+
+    const labelsRow = worksheet.addRow([
+      "STT",
+      "Mã chi phí",
+      "Danh mục",
+      "Tên chi phí",
+      "Số tiền",
+      "Ngày chi",
+      "Ghi chú",
+      "Ngày tạo",
+    ]);
+
+    labelsRow.eachCell((cell) => {
+      cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FF0EA5E9" },
+      };
+      cell.alignment = { horizontal: "left", vertical: "middle" };
+      cell.border = {
+        top: { style: "thin", color: { argb: "FFE5E7EB" } },
+        left: { style: "thin", color: { argb: "FFE5E7EB" } },
+        bottom: { style: "thin", color: { argb: "FFE5E7EB" } },
+        right: { style: "thin", color: { argb: "FFE5E7EB" } },
+      };
+    });
+
+    exportRows.forEach((expense, index) => {
+      const row = worksheet.addRow([
+        index + 1,
+        expense.expenseCode,
+        ExpenseCategoryLabels[expense.category as ExpenseCategory],
+        expense.name,
+        expense.amount,
+        formatDate(expense.expenseDate),
+        expense.note || "",
+        formatDateTime(expense.createdAt),
+      ]);
+
+      row.eachCell((cell, colNumber) => {
+        cell.alignment = { horizontal: "left", vertical: "middle" };
+        cell.border = {
+          top: { style: "thin", color: { argb: "FFF3F4F6" } },
+          left: { style: "thin", color: { argb: "FFF3F4F6" } },
+          bottom: { style: "thin", color: { argb: "FFF3F4F6" } },
+          right: { style: "thin", color: { argb: "FFF3F4F6" } },
+        };
+
+        if (colNumber === 5 && typeof cell.value === "number") {
+          cell.numFmt = "#,##0";
+        }
+      });
+    });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    const fileDate = new Date().toISOString().slice(0, 10);
+    anchor.href = url;
+    anchor.download = `Thong_Ke_Chi_Phi_${fileDate}.xlsx`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+
+    ElMessage.success("Xuất Excel thành công");
+  } catch (error: any) {
+    ElMessage.error(error.message || "Không thể xuất Excel");
+  } finally {
+    exporting.value = false;
+  }
 };
 
 onMounted(() => {

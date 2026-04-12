@@ -574,38 +574,14 @@ const activeMenu = computed(() => route.path);
 // Menu items configuration
 const menuItems = computed(() => {
   const items = [];
-  const role = authStore.userRole;
 
-  // Dashboard - role-specific
-  if (role === "DOCTOR") {
-    items.push({
-      path: "/doctor",
-      route: { name: "DoctorDashboard" },
-      label: "Tổng quan",
-      icon: h(DashboardIcon),
-    });
-  } else if (role === "CASHIER") {
-    items.push({
-      path: "/cashier",
-      route: { name: "CashierDashboard" },
-      label: "Tổng quan",
-      icon: h(DashboardIcon),
-    });
-  } else if (role === "ADMIN") {
-    items.push({
-      path: "/admin",
-      route: { name: "AdminDashboard" },
-      label: "Tổng quan",
-      icon: h(DashboardIcon),
-    });
-  } else {
-    items.push({
-      path: "/",
-      route: { name: "Dashboard" },
-      label: "Tổng quan",
-      icon: h(DashboardIcon),
-    });
-  }
+  // Public site shortcuts
+  items.push({
+    path: "/public",
+    route: { path: "/public", query: { returnTo: route.fullPath } },
+    label: "Giới thiệu",
+    icon: h(DashboardIcon),
+  });
 
   // ========== DOCTOR MENU ==========
   if (authStore.isDoctor) {
@@ -701,6 +677,12 @@ const menuItems = computed(() => {
         icon: h(ServiceIcon),
       },
       {
+        path: "/public-contents",
+        route: { name: "PublicContents" },
+        label: "Thông tin công khai",
+        icon: h(ServiceIcon),
+      },
+      {
         path: "/expenses",
         route: { name: "Expenses" },
         label: "Chi phí",
@@ -770,6 +752,12 @@ const menuItems = computed(() => {
         path: "/services",
         route: { name: "Services" },
         label: "Dịch vụ",
+        icon: h(ServiceIcon),
+      },
+      {
+        path: "/public-contents",
+        route: { name: "PublicContents" },
+        label: "Thông tin công khai",
         icon: h(ServiceIcon),
       },
       {

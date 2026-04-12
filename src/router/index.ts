@@ -8,6 +8,69 @@ import { ElMessage } from "element-plus";
 
 const routes: RouteRecordRaw[] = [
   {
+    path: "/public",
+    component: () => import("@/views/public-site/PublicSiteLayout.vue"),
+    children: [
+      {
+        path: "",
+        name: "PublicHome",
+        component: () => import("@/views/public-site/PublicHomeView.vue"),
+        meta: { title: "Phòng khám nha khoa" },
+      },
+      {
+        path: "doctors",
+        name: "PublicDoctors",
+        component: () => import("@/views/public-site/PublicDoctorsView.vue"),
+        meta: { title: "Danh sách bác sĩ" },
+      },
+      {
+        path: "doctors/:slug",
+        name: "PublicDoctorDetail",
+        component: () =>
+          import("@/views/public-site/PublicDoctorDetailView.vue"),
+        meta: { title: "Chi tiết bác sĩ" },
+      },
+      {
+        path: "services",
+        name: "PublicServices",
+        component: () => import("@/views/public-site/PublicServicesView.vue"),
+        meta: { title: "Danh sách dịch vụ" },
+      },
+      {
+        path: "services/:slug",
+        name: "PublicServiceDetail",
+        component: () =>
+          import("@/views/public-site/PublicServiceDetailView.vue"),
+        meta: { title: "Chi tiết dịch vụ" },
+      },
+      {
+        path: "medicines",
+        name: "PublicMedicines",
+        component: () => import("@/views/public-site/PublicMedicinesView.vue"),
+        meta: { title: "Danh sách thuốc" },
+      },
+      {
+        path: "medicines/:slug",
+        name: "PublicMedicineDetail",
+        component: () =>
+          import("@/views/public-site/PublicMedicineDetailView.vue"),
+        meta: { title: "Chi tiết thuốc" },
+      },
+      {
+        path: "about",
+        name: "PublicAbout",
+        component: () => import("@/views/public-site/PublicAboutView.vue"),
+        meta: { title: "Giới thiệu phòng khám" },
+      },
+      {
+        path: "contact",
+        name: "PublicContact",
+        component: () => import("@/views/public-site/PublicContactView.vue"),
+        meta: { title: "Liên hệ" },
+      },
+    ],
+  },
+  {
     path: "/login",
     name: "Login",
     component: () => import("@/views/auth/LoginView.vue"),
@@ -202,6 +265,26 @@ const routes: RouteRecordRaw[] = [
         name: "Expenses",
         component: () => import("@/views/expenses/ExpenseListView.vue"),
         meta: { title: "Quản lý chi phí", roles: ["ADMIN", "CASHIER"] },
+      },
+      {
+        path: "/public-contents",
+        name: "PublicContents",
+        component: () =>
+          import("@/views/public-contents/PublicContentManagementView.vue"),
+        meta: {
+          title: "Quản lý thông tin công khai",
+          roles: ["ADMIN", "CASHIER"],
+        },
+      },
+      {
+        path: "/public-contents/:id",
+        name: "PublicContentDetail",
+        component: () =>
+          import("@/views/public-contents/PublicContentDetailView.vue"),
+        meta: {
+          title: "Chi tiết thông tin công khai",
+          roles: ["ADMIN", "CASHIER"],
+        },
       },
       {
         path: "/users",

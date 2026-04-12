@@ -460,16 +460,39 @@ const paymentDialogVisible = ref(false);
 const formDialogVisible = ref(false);
 const currentInvoice = ref<Invoice | null>(null);
 
+const getCurrentMonthRange = (): [string, string] => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+
+  const toYmd = (date: Date) => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  };
+
+  return [toYmd(firstDay), toYmd(lastDay)];
+};
+
+const [defaultFromDate, defaultToDate] = getCurrentMonthRange();
+
 const searchParams = reactive({
   patientId: "",
   status: "" as InvoiceStatus | "",
-  fromDate: "",
-  toDate: "",
+  fromDate: `${defaultFromDate}T00:00:00Z`,
+  toDate: `${defaultToDate}T23:59:59Z`,
   page: 1,
   size: 10,
 });
 
-const dateRange = ref<[string, string] | null>(null);
+const dateRange = ref<[string, string] | null>([
+  defaultFromDate,
+  defaultToDate,
+]);
 
 // Watch date range and update searchParams
 watch(dateRange, (newValue) => {
@@ -528,9 +551,10 @@ const handleSearch = () => {
 const handleReset = () => {
   searchParams.patientId = "";
   searchParams.status = "";
-  searchParams.fromDate = "";
-  searchParams.toDate = "";
-  dateRange.value = null;
+  const [fromDate, toDate] = getCurrentMonthRange();
+  searchParams.fromDate = `${fromDate}T00:00:00Z`;
+  searchParams.toDate = `${toDate}T23:59:59Z`;
+  dateRange.value = [fromDate, toDate];
   searchParams.page = 1;
   searchParams.size = 10;
   loadInvoices();

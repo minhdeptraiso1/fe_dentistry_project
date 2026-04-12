@@ -18,6 +18,16 @@
           <div class="point-item">Theo dõi hồ sơ bệnh nhân tức thời</div>
           <div class="point-item">Bảo mật theo vai trò người dùng</div>
         </div>
+
+        <div class="brand-highlight">
+          <p class="brand-highlight-text">
+            Bạn có thể xem qua về nha khoa bằng nút bên dưới.
+          </p>
+          <router-link to="/public" class="brand-public-btn">
+            Đến trang giới thiệu
+            <span aria-hidden="true">&rarr;</span>
+          </router-link>
+        </div>
       </aside>
 
       <section class="form-panel">
@@ -109,12 +119,69 @@
               />
             </el-form-item>
 
-            <el-form-item prop="patientCode">
+            <el-form-item>
+              <el-checkbox
+                v-model="hasPatientCode"
+                @change="handlePatientCodeToggle"
+              >
+                Tôi đã có mã bệnh nhân
+              </el-checkbox>
+            </el-form-item>
+
+            <el-form-item v-if="hasPatientCode" prop="patientCode">
               <el-input
                 v-model="registerData.patientCode"
                 placeholder="Mã bệnh nhân"
               />
             </el-form-item>
+
+            <template v-else>
+              <el-form-item prop="fullName">
+                <el-input
+                  v-model="registerData.fullName"
+                  placeholder="Họ và tên"
+                />
+              </el-form-item>
+
+              <el-form-item prop="gender">
+                <el-select
+                  v-model="registerData.gender"
+                  placeholder="Giới tính"
+                  style="width: 100%"
+                >
+                  <el-option label="Nam" value="MALE" />
+                  <el-option label="Nữ" value="FEMALE" />
+                  <el-option label="Khác" value="OTHER" />
+                </el-select>
+              </el-form-item>
+
+              <el-form-item prop="phone">
+                <el-input
+                  v-model="registerData.phone"
+                  placeholder="Số điện thoại"
+                />
+              </el-form-item>
+
+              <el-form-item prop="dob">
+                <el-date-picker
+                  v-model="registerData.dob"
+                  type="date"
+                  placeholder="Ngày sinh"
+                  value-format="YYYY-MM-DD"
+                  format="DD/MM/YYYY"
+                  style="width: 100%"
+                />
+              </el-form-item>
+
+              <el-form-item prop="address">
+                <el-input
+                  v-model="registerData.address"
+                  type="textarea"
+                  :rows="2"
+                  placeholder="Địa chỉ"
+                />
+              </el-form-item>
+            </template>
 
             <el-form-item prop="password">
               <el-input
@@ -199,14 +266,43 @@ const registerFormRef = ref<FormInstance>();
 const registerLoading = ref(false);
 const registerError = ref("");
 const passwordMismatchError = ref("");
+const hasPatientCode = ref(false);
 
 const registerData = reactive({
   email: "",
   username: "",
   patientCode: "",
+  fullName: "",
+  gender: "" as "" | "MALE" | "FEMALE" | "OTHER",
+  phone: "",
+  dob: "",
+  address: "",
   password: "",
   confirmPassword: "",
 });
+
+const handlePatientCodeToggle = () => {
+  registerError.value = "";
+
+  if (hasPatientCode.value) {
+    registerData.fullName = "";
+    registerData.gender = "";
+    registerData.phone = "";
+    registerData.dob = "";
+    registerData.address = "";
+  } else {
+    registerData.patientCode = "";
+  }
+
+  registerFormRef.value?.clearValidate([
+    "patientCode",
+    "fullName",
+    "gender",
+    "phone",
+    "dob",
+    "address",
+  ]);
+};
 
 const validatePasswordMatch = () => {
   if (registerData.password && registerData.confirmPassword) {
@@ -236,7 +332,76 @@ const registerRules = {
     },
   ],
   patientCode: [
-    { required: true, message: "Vui lòng nhập mã bệnh nhân", trigger: "blur" },
+    {
+      validator: (_rule: any, value: string, callback: any) => {
+        if (hasPatientCode.value && !value?.trim()) {
+          callback(new Error("Vui lòng nhập mã bệnh nhân"));
+          return;
+        }
+        callback();
+      },
+      trigger: ["blur", "change"],
+    },
+  ],
+  fullName: [
+    {
+      validator: (_rule: any, value: string, callback: any) => {
+        if (!hasPatientCode.value && !value?.trim()) {
+          callback(new Error("Vui lòng nhập họ và tên"));
+          return;
+        }
+        callback();
+      },
+      trigger: ["blur", "change"],
+    },
+  ],
+  gender: [
+    {
+      validator: (_rule: any, value: string, callback: any) => {
+        if (!hasPatientCode.value && !value) {
+          callback(new Error("Vui lòng chọn giới tính"));
+          return;
+        }
+        callback();
+      },
+      trigger: ["blur", "change"],
+    },
+  ],
+  phone: [
+    {
+      validator: (_rule: any, value: string, callback: any) => {
+        if (!hasPatientCode.value && !value?.trim()) {
+          callback(new Error("Vui lòng nhập số điện thoại"));
+          return;
+        }
+        callback();
+      },
+      trigger: ["blur", "change"],
+    },
+  ],
+  dob: [
+    {
+      validator: (_rule: any, value: string, callback: any) => {
+        if (!hasPatientCode.value && !value) {
+          callback(new Error("Vui lòng chọn ngày sinh"));
+          return;
+        }
+        callback();
+      },
+      trigger: ["blur", "change"],
+    },
+  ],
+  address: [
+    {
+      validator: (_rule: any, value: string, callback: any) => {
+        if (!hasPatientCode.value && !value?.trim()) {
+          callback(new Error("Vui lòng nhập địa chỉ"));
+          return;
+        }
+        callback();
+      },
+      trigger: ["blur", "change"],
+    },
   ],
   password: [
     { required: true, message: "Vui lòng nhập mật khẩu", trigger: "blur" },
@@ -298,22 +463,36 @@ const handleRegister = async () => {
     registerLoading.value = true;
     registerError.value = "";
 
-    // Send only required fields to backend
     const payload: any = {
       username: registerData.username,
       password: registerData.password,
       email: registerData.email,
-      patientCode: registerData.patientCode,
     };
+
+    if (hasPatientCode.value) {
+      payload.patientCode = registerData.patientCode?.trim();
+    } else {
+      payload.fullName = registerData.fullName?.trim();
+      payload.gender = registerData.gender;
+      payload.phone = registerData.phone?.trim();
+      payload.dob = registerData.dob;
+      payload.address = registerData.address?.trim();
+    }
 
     await authApi.registerPatient(payload);
 
-    notification.success("Đăng ký thành công! Vui lòng đăng nhập.");
-    // Reset form and switch to login tab
-    registerFormRef.value.resetFields();
-    activeTab.value = "login";
-    loginData.username = registerData.username;
-    passwordMismatchError.value = "";
+    notification.success("Đăng ký thành công! Đang tự động đăng nhập...");
+
+    const success = await authStore.login({
+      username: registerData.username,
+      password: registerData.password,
+    });
+
+    if (success) {
+      const redirect = route.query.redirect as string;
+      router.push(redirect || "/");
+      return;
+    }
   } catch (error: any) {
     console.error("Register failed:", error);
     registerError.value =
@@ -456,12 +635,52 @@ const handleRegister = async () => {
   background: #99f6e4;
 }
 
+.brand-highlight {
+  margin-top: 22px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(153, 246, 228, 0.5);
+  border-radius: 14px;
+  padding: 14px;
+  display: grid;
+  gap: 10px;
+}
+
+.brand-highlight-text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.94);
+}
+
+.brand-public-btn {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  border: 1px solid rgba(153, 246, 228, 0.75);
+  color: #ecfeff;
+  background: rgba(15, 118, 110, 0.45);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 9px 14px;
+  border-radius: 999px;
+  transition: all 0.2s ease;
+}
+
+.brand-public-btn:hover {
+  background: rgba(13, 148, 136, 0.75);
+  border-color: #99f6e4;
+}
+
 .form-panel {
   height: 100%;
   padding: 42px 38px 36px;
   background: #ffffff;
   display: flex;
   flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .tab-switcher {
@@ -497,6 +716,9 @@ const handleRegister = async () => {
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 6px;
 }
 
 .panel-title {
@@ -543,7 +765,7 @@ const handleRegister = async () => {
 }
 
 .submit-btn {
-  margin-top: auto;
+  margin-top: 8px;
   width: 100%;
   height: 46px;
   border: none;
@@ -586,6 +808,8 @@ const handleRegister = async () => {
 
   .panel-content {
     max-width: none;
+    overflow: visible;
+    padding-right: 0;
   }
 }
 </style>

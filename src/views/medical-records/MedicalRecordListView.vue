@@ -338,15 +338,38 @@ const selectedRecord = ref<MedicalRecord | null>(null);
 const presetPatientId = ref<string>();
 const appointmentId = ref<string>();
 
+const getCurrentMonthRange = (): [string, string] => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+
+  const toYmd = (date: Date) => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  };
+
+  return [toYmd(firstDay), toYmd(lastDay)];
+};
+
+const [defaultFromDate, defaultToDate] = getCurrentMonthRange();
+
 const searchParams = reactive({
   keyword: "",
   patientId: "",
   doctorId: "",
-  fromDate: "",
-  toDate: "",
+  fromDate: `${defaultFromDate}T00:00:00Z`,
+  toDate: `${defaultToDate}T23:59:59Z`,
 });
 
-const dateRange = ref<[string, string] | null>(null);
+const dateRange = ref<[string, string] | null>([
+  defaultFromDate,
+  defaultToDate,
+]);
 
 // Watch date range and update searchParams
 watch(dateRange, (newValue) => {

@@ -317,13 +317,25 @@ use([
 
 const loading = ref(false);
 
-// Date range - default to last 30 days
-const dateRange = ref<[string, string]>([
-  new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .split("T")[0] as string,
-  new Date().toISOString().split("T")[0] as string,
-]);
+const getCurrentMonthDateRange = (): [string, string] => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+
+  const toYmd = (date: Date) => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  };
+
+  return [toYmd(firstDay), toYmd(lastDay)];
+};
+
+const dateRange = ref<[string, string]>(getCurrentMonthDateRange());
 
 // Summary data
 const summary = ref<DashboardSummary>({

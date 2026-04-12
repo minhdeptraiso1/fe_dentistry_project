@@ -101,6 +101,29 @@
 
         <div class="appointment-actions">
           <el-button
+            v-if="canReschedule(appointment)"
+            type="info"
+            size="default"
+            @click="rescheduleAppointment(appointment)"
+            :loading="actionLoading === appointment.id"
+          >
+            <el-icon><Calendar /></el-icon>
+            Dời lịch
+          </el-button>
+
+          <el-button
+            v-if="canCancelChain(appointment)"
+            type="danger"
+            size="default"
+            plain
+            @click="cancelAppointmentChain(appointment)"
+            :loading="actionLoading === appointment.id"
+          >
+            <el-icon><Delete /></el-icon>
+            Hủy chuỗi hẹn
+          </el-button>
+
+          <el-button
             v-if="
               appointment.status === 'ASSIGNED' &&
               isAppointmentDateReached(appointment.workDate)
@@ -192,6 +215,8 @@ import {
   Check,
   View,
   Clock,
+  Calendar,
+  Delete,
 } from "@element-plus/icons-vue";
 import { appointmentApi } from "@/api/appointment";
 import { useAuthStore } from "@/stores/auth";
@@ -252,6 +277,23 @@ const isAppointmentDateReached = (workDate: string) => {
   return appointmentDate <= today;
 };
 
+const canReschedule = (appointment: Appointment) => {
+  return appointment.status !== "DONE" && appointment.status !== "CANCELLED";
+};
+
+const canCancelChain = (appointment: Appointment) => {
+  if (appointment.status === "DONE" || appointment.status === "CANCELLED") {
+    return false;
+  }
+
+  const sequenceNo = (appointment as any).sequenceNo;
+  const parentId = (appointment as any).parentId;
+
+  return (
+    Boolean(parentId) || (typeof sequenceNo === "number" && sequenceNo > 1)
+  );
+};
+
 // Methods
 const loadMyAppointments = async () => {
   if (!authStore.user?.id) return;
@@ -261,6 +303,7 @@ const loadMyAppointments = async () => {
     const response = await appointmentApi.search({
       date: selectedDate.value,
       doctorId: authStore.user.id,
+      sort: "createdAt,desc",
       page: 0,
       size: 100,
     });
@@ -316,6 +359,68 @@ const finishAppointment = async (appointment: Appointment) => {
   } catch (error: any) {
     if (error !== "cancel") {
       ElMessage.error(error.message || "Không thể kết thúc khám");
+    }
+  } finally {
+    actionLoading.value = null;
+  }
+};
+
+const rescheduleAppointment = async (appointment: Appointment) => {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const defaultDate = tomorrow.toISOString().slice(0, 10);
+
+  try {
+    const result = await ElMessageBox.prompt(
+      `Nhập ngày mới cho lịch hẹn ${appointment.appointmentCode} (YYYY-MM-DD)`,
+      "Dời lịch hẹn",
+      {
+        confirmButtonText: "Dời lịch",
+        cancelButtonText: "Hủy",
+        inputValue: defaultDate,
+        inputPlaceholder: "YYYY-MM-DD",
+        inputPattern: /^\d{4}-\d{2}-\d{2}$/,
+        inputErrorMessage: "Ngày không đúng định dạng YYYY-MM-DD",
+      },
+    );
+
+    const value =
+      typeof result === "object" && "value" in result
+        ? String((result as any).value)
+        : "";
+
+    actionLoading.value = appointment.id;
+    await appointmentApi.reschedule(appointment.id, value);
+    ElMessage.success("Dời lịch hẹn thành công");
+    loadMyAppointments();
+  } catch (error: any) {
+    if (error !== "cancel") {
+      ElMessage.error(error.message || "Không thể dời lịch hẹn");
+    }
+  } finally {
+    actionLoading.value = null;
+  }
+};
+
+const cancelAppointmentChain = async (appointment: Appointment) => {
+  try {
+    await ElMessageBox.confirm(
+      `Bạn có chắc muốn hủy toàn bộ chuỗi follow-up của lịch ${appointment.appointmentCode}?`,
+      "Xác nhận hủy chuỗi",
+      {
+        confirmButtonText: "Hủy chuỗi",
+        cancelButtonText: "Đóng",
+        type: "warning",
+      },
+    );
+
+    actionLoading.value = appointment.id;
+    await appointmentApi.cancel(appointment.id, undefined, true);
+    ElMessage.success("Đã hủy chuỗi lịch follow-up");
+    loadMyAppointments();
+  } catch (error: any) {
+    if (error !== "cancel") {
+      ElMessage.error(error.message || "Không thể hủy chuỗi lịch");
     }
   } finally {
     actionLoading.value = null;

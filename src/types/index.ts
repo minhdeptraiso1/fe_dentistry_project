@@ -150,3 +150,4 @@ export * from "./medicine";
 export * from "./prescription";
 export * from "./appointment";
 export * from "./notification";
+export * from "./publicContent";
