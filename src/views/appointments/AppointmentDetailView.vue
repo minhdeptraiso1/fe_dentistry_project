@@ -132,13 +132,6 @@
                 <h4 class="patient-name">
                   {{ appointment.doctorName || "Bác sĩ" }}
                 </h4>
-                <p class="patient-code">
-                  Username:
-                  {{
-                    (appointment as any).doctorUsername ||
-                    appointment.doctorName
-                  }}
-                </p>
               </div>
             </div>
             <div v-else class="empty-state-small">

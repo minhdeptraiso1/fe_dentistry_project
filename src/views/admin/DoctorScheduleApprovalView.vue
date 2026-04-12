@@ -187,13 +187,21 @@ const page = ref(0);
 const size = ref(10);
 const total = ref(0);
 
+const getTodayDateString = () => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 const filters = reactive<{
   date?: string;
   shift?: WorkShift;
   doctorId?: string;
   status: "ALL" | ScheduleRequestStatus;
 }>({
-  date: undefined,
+  date: getTodayDateString(),
   shift: undefined,
   doctorId: undefined,
   status: "ALL",
@@ -249,7 +257,7 @@ const applyFilters = () => {
 };
 
 const resetFilters = () => {
-  filters.date = undefined;
+  filters.date = getTodayDateString();
   filters.shift = undefined;
   filters.doctorId = undefined;
   filters.status = "ALL";

@@ -56,6 +56,7 @@ export interface AppointmentSearchParams {
   patientId?: string;
   status?: AppointmentStatus;
   shift?: WorkShift;
+  sort?: string | string[];
   page?: number;
   size?: number;
 }

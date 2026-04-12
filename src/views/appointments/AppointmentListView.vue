@@ -132,7 +132,7 @@
         </el-table-column>
         <el-table-column
           label="Thao tác"
-          width="280"
+          width="300"
           fixed="right"
           align="center"
         >
@@ -155,7 +155,7 @@
               </button>
               <button
                 v-if="row.status === 'WAITING' || row.status === 'ASSIGNED'"
-                @click="cancelAppointment(row)"
+                @click="openCancelDialog(row)"
                 class="action-btn action-btn-danger"
               >
                 <el-icon><Close /></el-icon>
@@ -190,13 +190,58 @@
       :appointment="selectedAppointment"
       @success="loadAppointments"
     />
+
+    <el-dialog
+      v-model="cancelDialogVisible"
+      title="Hủy lịch hẹn"
+      width="520px"
+      :close-on-click-modal="false"
+    >
+      <p class="cancel-dialog-text">
+        Bạn có chắc muốn hủy lịch hẹn
+        {{ cancelDialogAppointment?.appointmentCode }}?
+      </p>
+
+      <el-input
+        v-model="cancelDialogNote"
+        type="textarea"
+        :rows="3"
+        placeholder="Lý do hủy (tùy chọn)"
+      />
+
+      <template #footer>
+        <div class="dialog-footer">
+          <button
+            class="cancel-button"
+            :disabled="cancelDialogLoading"
+            @click="cancelDialogVisible = false"
+          >
+            Đóng
+          </button>
+          <button
+            class="submit-button"
+            :disabled="cancelDialogLoading"
+            @click="handleCancelAppointment"
+          >
+            Hủy lịch hẹn
+          </button>
+          <button
+            class="cancel-all-button"
+            :disabled="cancelDialogLoading"
+            @click="handleCancelAllAppointments"
+          >
+            Hủy toàn bộ
+          </button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import { ElMessage, ElMessageBox } from "element-plus";
+import { ElMessage } from "element-plus";
 import { Plus, Search, View, UserFilled, Close } from "@element-plus/icons-vue";
 import { appointmentApi } from "@/api/appointment";
 import CreateAppointmentDialog from "./components/CreateAppointmentDialog.vue";
@@ -217,20 +262,30 @@ const pagination = reactive({
   total: 0,
 });
 
+const getTodayDateString = () => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 // Search params
 const searchParams = reactive<{
   date?: string;
   shift?: WorkShift;
   status?: string;
 }>({
-  date: undefined,
+  date: getTodayDateString(),
   shift: undefined,
   status: undefined,
 });
-
-// Dialog visibility
 const createDialogVisible = ref(false);
 const assignDialogVisible = ref(false);
+const cancelDialogVisible = ref(false);
+const cancelDialogLoading = ref(false);
+const cancelDialogNote = ref("");
+const cancelDialogAppointment = ref<Appointment | null>(null);
 
 // Methods
 const loadAppointments = async () => {
@@ -269,30 +324,54 @@ const openAssignDialog = (appointment: Appointment) => {
   assignDialogVisible.value = true;
 };
 
-const cancelAppointment = async (appointment: Appointment) => {
-  try {
-    const result = await ElMessageBox.prompt(
-      `Bạn có chắc muốn hủy lịch hẹn ${appointment.appointmentCode}?`,
-      "Hủy lịch hẹn",
-      {
-        confirmButtonText: "Hủy lịch hẹn",
-        cancelButtonText: "Đóng",
-        inputPlaceholder: "Lý do hủy (tùy chọn)",
-        inputType: "textarea",
-      },
-    );
+const openCancelDialog = (appointment: Appointment) => {
+  cancelDialogAppointment.value = appointment;
+  cancelDialogNote.value = "";
+  cancelDialogVisible.value = true;
+};
 
-    const note =
-      typeof result === "object" && "value" in result
-        ? (result as any).value
-        : "";
-    await appointmentApi.cancel(appointment.id, note);
+const handleCancelAppointment = async () => {
+  if (!cancelDialogAppointment.value) {
+    return;
+  }
+
+  try {
+    cancelDialogLoading.value = true;
+    await appointmentApi.cancel(
+      cancelDialogAppointment.value.id,
+      cancelDialogNote.value?.trim() || undefined,
+      false,
+    );
     ElMessage.success("Đã hủy lịch hẹn");
+    cancelDialogVisible.value = false;
     loadAppointments();
   } catch (error: any) {
-    if (error !== "cancel") {
-      ElMessage.error(error.message || "Không thể hủy lịch hẹn");
-    }
+    ElMessage.error(error.message || "Không thể hủy lịch hẹn");
+  } finally {
+    cancelDialogLoading.value = false;
+  }
+};
+
+const handleCancelAllAppointments = async () => {
+  if (!cancelDialogAppointment.value) {
+    return;
+  }
+
+  try {
+    cancelDialogLoading.value = true;
+    await appointmentApi.cancel(
+      cancelDialogAppointment.value.id,
+      cancelDialogNote.value?.trim() || undefined,
+      true,
+    );
+
+    ElMessage.success("Đã hủy toàn bộ chuỗi lịch khám");
+    cancelDialogVisible.value = false;
+    loadAppointments();
+  } catch (error: any) {
+    ElMessage.error(error.message || "Không thể hủy toàn bộ chuỗi lịch khám");
+  } finally {
+    cancelDialogLoading.value = false;
   }
 };
 
@@ -563,6 +642,12 @@ onMounted(() => {
     }
   }
 
+  .cancel-dialog-text {
+    margin: 0 0 12px;
+    color: #374151;
+    font-size: 16px;
+  }
+
   .table-card {
     background: white;
     border-radius: 16px;
@@ -650,6 +735,16 @@ onMounted(() => {
 
         &:hover {
           background: #fee2e2;
+          transform: translateY(-1px);
+        }
+      }
+
+      &.action-btn-danger-outline {
+        background: #fff7ed;
+        color: #ea580c;
+
+        &:hover {
+          background: #ffedd5;
           transform: translateY(-1px);
         }
       }
@@ -912,7 +1007,8 @@ onMounted(() => {
   background: white;
 
   .cancel-button,
-  .submit-button {
+  .submit-button,
+  .cancel-all-button {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -951,6 +1047,30 @@ onMounted(() => {
     &:hover:not(:disabled) {
       transform: translateY(-2px);
       box-shadow: 0 6px 20px rgba(20, 184, 166, 0.4);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+
+  .cancel-all-button {
+    padding: 10px 24px;
+    border: none;
+    background: #dc2626;
+    color: #ffffff;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.28);
+
+    &:hover:not(:disabled) {
+      transform: translateY(-2px);
+      background: #b91c1c;
+      box-shadow: 0 6px 20px rgba(220, 38, 38, 0.35);
     }
 
     &:disabled {

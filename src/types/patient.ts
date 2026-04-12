@@ -20,7 +20,12 @@ export interface RegisterPatientRequest {
   username: string;
   password: string;
   email: string;
-  patientCode: string;
+  patientCode?: string;
+  fullName?: string;
+  gender?: "MALE" | "FEMALE" | "OTHER";
+  phone?: string;
+  dob?: string;
+  address?: string;
 }
 
 export interface InvoiceItemResponse {

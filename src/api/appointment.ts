@@ -21,7 +21,12 @@ export const appointmentApi = {
 
   // Search appointments
   search(params: AppointmentSearchParams) {
-    return request.get<PageResponse<Appointment>>("/appointments", { params });
+    return request.get<PageResponse<Appointment>>("/appointments", {
+      params: {
+        sort: "createdAt,desc",
+        ...params,
+      },
+    });
   },
 
   // Get my appointments (PATIENT)
@@ -51,10 +56,10 @@ export const appointmentApi = {
     return request.post<Appointment>(`/appointments/${id}/follow-up`, data);
   },
 
-  // Cancel appointment
-  cancel(id: string, note?: string) {
+  // Cancel single appointment or whole follow-up chain
+  cancel(id: string, note?: string, cancelAll = false) {
     return request.post<void>(`/appointments/${id}/cancel`, null, {
-      params: { note },
+      params: { note, cancelAll },
     });
   },
 
@@ -66,5 +71,12 @@ export const appointmentApi = {
   // Doctor finishes appointment (DONE)
   finish(id: string) {
     return request.post<Appointment>(`/appointments/${id}/finish`);
+  },
+
+  // Reschedule appointment to a new date
+  reschedule(id: string, newDate: string) {
+    return request.post<Appointment>(`/appointments/${id}/reschedule`, null, {
+      params: { newDate },
+    });
   },
 };
