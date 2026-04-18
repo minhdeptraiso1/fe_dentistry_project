@@ -28,6 +28,12 @@ export interface RegisterPatientRequest {
   address?: string;
 }
 
+export interface ActiveDoctorResponse {
+  id: string;
+  name: string;
+  img?: string;
+}
+
 export interface InvoiceItemResponse {
   id: string;
   serviceId: string;

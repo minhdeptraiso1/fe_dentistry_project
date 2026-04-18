@@ -77,6 +77,12 @@ const routes: RouteRecordRaw[] = [
     meta: { guest: true, title: "Đăng nhập" },
   },
   {
+    path: "/payment/vnpay-return",
+    name: "VnPayReturn",
+    component: () => import("@/views/payment/VnPayReturnView.vue"),
+    meta: { title: "Kết quả thanh toán" },
+  },
+  {
     path: "/",
     component: () => import("@/layouts/MainLayout.vue"),
     meta: { requiresAuth: true },

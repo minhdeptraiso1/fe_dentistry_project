@@ -8,6 +8,7 @@ import type {
 } from "@/types";
 import type {
   PatientResponse,
+  ActiveDoctorResponse,
   InvoiceMyResponse,
   InvoiceDetailResponse,
   MedicalRecordResponse,
@@ -65,6 +66,14 @@ export const patientApi = {
    */
   getMyProfile() {
     return request.get<PatientResponse>("/patients/me");
+  },
+
+  /**
+   * Get active doctors for patient booking screen
+   * GET /patients/me/active-doctors
+   */
+  getActiveDoctors() {
+    return request.get<ActiveDoctorResponse[]>("/patients/me/active-doctors");
   },
 
   /**

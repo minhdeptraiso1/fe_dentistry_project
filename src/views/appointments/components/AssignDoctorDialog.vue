@@ -37,6 +37,12 @@
           {{ appointment.shift === "MORNING" ? "Sáng" : "Chiều" }}
         </el-tag>
       </div>
+      <div class="info-row info-row-note">
+        <span class="info-label">Ghi chú:</span>
+        <span class="info-value note-value">
+          {{ appointment.note?.trim() || "Không có" }}
+        </span>
+      </div>
     </div>
 
     <el-divider style="margin: 20px 0" />
@@ -129,6 +135,8 @@ import { ElMessage, type FormInstance } from "element-plus";
 import { UserFilled, Close, Check } from "@element-plus/icons-vue";
 import { doctorCapacityApi } from "@/api/doctorCapacity";
 import { appointmentApi } from "@/api/appointment";
+import { emailApi } from "@/api/email";
+import { userApi } from "@/api/user";
 import type { Appointment, AvailableDoctor } from "@/types";
 
 const props = defineProps<{
@@ -160,6 +168,41 @@ const visible = computed({
   get: () => props.modelValue,
   set: (val) => emit("update:modelValue", val),
 });
+
+const resolvePatientEmail = async (appointment: Appointment) => {
+  if (!appointment.patientId) return undefined;
+
+  try {
+    const patientUser = await userApi.getById(appointment.patientId);
+    const email = patientUser?.email;
+    return typeof email === "string" && email.trim() ? email.trim() : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+const fireAssignedDoctorEmail = async (
+  appointment: Appointment,
+  doctorName: string,
+) => {
+  const to = await resolvePatientEmail(appointment);
+  if (!to) return;
+
+  const shiftLabel = appointment.shift === "MORNING" ? "Ca sáng" : "Ca chiều";
+
+  await emailApi.sendTemplate({
+    to,
+    subject: "Thông báo phân công bác sĩ lịch khám",
+    template: "appointment-assigned",
+    model: {
+      patientName: appointment.patientName || "Bệnh nhân",
+      appointmentCode: appointment.appointmentCode,
+      workDate: formatDate(appointment.workDate),
+      shift: shiftLabel,
+      doctorName,
+    },
+  });
+};
 
 const formatDate = (date: string) => {
   if (!date) return "";
@@ -198,9 +241,23 @@ const handleSubmit = async () => {
     if (!props.appointment) return;
 
     submitting.value = true;
-    await appointmentApi.assignDoctor(props.appointment.id, {
+    const assigned = await appointmentApi.assignDoctor(props.appointment.id, {
       doctorId: form.doctorId,
     });
+
+    const selectedDoctor = availableDoctors.value.find(
+      (doctor) => doctor.doctorId === form.doctorId,
+    );
+    const doctorName =
+      selectedDoctor?.doctorName ||
+      (assigned as any)?.doctorName ||
+      (assigned as any)?.doctorUsername ||
+      "Bác sĩ phụ trách";
+
+    void fireAssignedDoctorEmail(props.appointment, doctorName).catch(() => {
+      // Best-effort async email.
+    });
+
     ElMessage.success("Phân công bác sĩ thành công");
     emit("success");
     visible.value = false;
@@ -348,6 +405,18 @@ watch(
         padding: 4px 12px;
         border-radius: 6px;
       }
+
+      &.note-value {
+        max-width: 68%;
+        text-align: right;
+        white-space: pre-wrap;
+        line-height: 1.5;
+      }
+    }
+
+    &.info-row-note {
+      align-items: flex-start;
+      padding-top: 12px;
     }
   }
 }
