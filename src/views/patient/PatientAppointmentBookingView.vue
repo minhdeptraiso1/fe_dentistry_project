@@ -29,12 +29,11 @@
               placeholder="Chọn ngày khám"
               style="width: 100%"
               :disabled-date="disabledDate"
-              @change="loadAvailableDoctors"
             />
           </el-form-item>
 
           <el-form-item label="Ca khám" prop="shift" class="shift-field">
-            <el-radio-group v-model="form.shift" @change="loadAvailableDoctors">
+            <el-radio-group v-model="form.shift">
               <el-radio-button value="MORNING">Ca sáng</el-radio-button>
               <el-radio-button value="AFTERNOON">Ca chiều</el-radio-button>
             </el-radio-group>
@@ -42,32 +41,37 @@
 
           <el-form-item label="Bác sĩ mong muốn (tùy chọn)">
             <el-select
-              v-model="form.doctorId"
-              placeholder="Để trống nếu không chọn"
+              v-model="selectedDoctorId"
+              placeholder="Chọn bác sĩ mong muốn"
               clearable
               filterable
               style="width: 100%"
               :loading="doctorLoading"
-              :disabled="!form.workDate || !form.shift"
             >
+              <template #empty>
+                <span>Không có bác sĩ đang hoạt động</span>
+              </template>
               <el-option
-                v-for="doctor in availableDoctors"
-                :key="doctor.doctorId"
-                :label="doctor.doctorName"
-                :value="doctor.doctorId"
-                :disabled="doctor.isFull"
+                v-for="doctor in activeDoctors"
+                :key="doctor.id"
+                :label="doctor.name"
+                :value="doctor.id"
               >
-                <div class="flex items-center justify-between">
-                  <span>{{ doctor.doctorName }}</span>
-                  <el-tag
-                    :type="doctor.isFull ? 'danger' : 'success'"
-                    size="small"
-                  >
-                    {{ doctor.currentPatients }}/{{ doctor.maxPatients }}
-                  </el-tag>
+                <div class="doctor-option-row">
+                  <div class="doctor-option-left">
+                    <el-avatar :size="30" :src="doctor.img || undefined">
+                      {{ doctor.name?.[0] || "?" }}
+                    </el-avatar>
+                    <span>{{ doctor.name }}</span>
+                  </div>
+                  <el-tag type="success" size="small">Đang hoạt động</el-tag>
                 </div>
               </el-option>
             </el-select>
+            <div class="hint-text">
+              Tên bác sĩ mong muốn sẽ được ghi vào ghi chú để nhân viên/admin
+              phân công.
+            </div>
           </el-form-item>
 
           <el-form-item label="Ghi chú">
@@ -156,25 +160,34 @@
 import { onMounted, reactive, ref } from "vue";
 import { ElMessage, type FormInstance } from "element-plus";
 import { appointmentApi } from "@/api/appointment";
-import { doctorCapacityApi } from "@/api/doctorCapacity";
+import { emailApi } from "@/api/email";
 import { patientApi } from "@/api/patient";
+import { useAuthStore } from "@/stores/auth";
 import type {
   Appointment,
   AppointmentStatus,
-  AvailableDoctor,
   CreateAppointmentRequest,
   WorkShift,
 } from "@/types";
 
+type ActiveDoctorOption = {
+  id: string;
+  name: string;
+  img?: string;
+};
+
 const formRef = ref<FormInstance>();
+const authStore = useAuthStore();
 const loading = ref(false);
 const submitting = ref(false);
 const doctorLoading = ref(false);
 const listDate = ref(new Date().toISOString().split("T")[0]);
 
 const patientId = ref("");
+const patientName = ref("");
 const appointments = ref<Appointment[]>([]);
-const availableDoctors = ref<AvailableDoctor[]>([]);
+const activeDoctors = ref<ActiveDoctorOption[]>([]);
+const selectedDoctorId = ref<string | undefined>(undefined);
 
 const form = reactive<CreateAppointmentRequest>({
   patientId: "",
@@ -237,34 +250,85 @@ const getDoctorDisplayName = (row: Appointment) => {
 const loadPatientProfile = async () => {
   const profile = await patientApi.getMyProfile();
   patientId.value = profile.id;
+  patientName.value = profile.fullName || "";
   form.patientId = profile.id;
 };
 
-const loadAvailableDoctors = async () => {
-  if (!form.workDate || !form.shift) {
-    availableDoctors.value = [];
-    form.doctorId = undefined;
-    return;
-  }
+const fireAppointmentCreatedEmail = (appointment: Appointment) => {
+  const to = authStore.user?.email;
+  if (!to) return;
 
+  emailApi
+    .sendTemplate({
+      to,
+      subject: "Xác nhận đặt lịch khám",
+      template: "appointment-created",
+      model: {
+        patientName:
+          patientName.value || authStore.user?.fullName || "Bệnh nhân",
+        appointmentCode: appointment.appointmentCode,
+        workDate: formatDate(appointment.workDate),
+        shift: appointment.shift === "MORNING" ? "Ca sáng" : "Ca chiều",
+        doctorName:
+          appointment.doctorName ||
+          appointment.doctorUsername ||
+          "Sẽ được phân công",
+        note: appointment.note || "Không có",
+      },
+    })
+    .catch(() => {
+      // Best-effort async call only.
+    });
+};
+
+const loadActiveDoctors = async () => {
   try {
     doctorLoading.value = true;
-    availableDoctors.value = await doctorCapacityApi.getAvailableDoctors(
-      form.workDate,
-      form.shift,
-    );
+    const doctors = await patientApi.getActiveDoctors();
+    const safeDoctors = Array.isArray(doctors) ? doctors : [];
+
+    activeDoctors.value = safeDoctors.map((doctor) => ({
+      id: doctor.id,
+      name: doctor.name || "Bác sĩ chưa đặt tên",
+      img: doctor.img,
+    }));
+
     if (
-      form.doctorId &&
-      !availableDoctors.value.some((d) => d.doctorId === form.doctorId)
+      selectedDoctorId.value &&
+      !activeDoctors.value.some(
+        (doctor) => doctor.id === selectedDoctorId.value,
+      )
     ) {
-      form.doctorId = undefined;
+      selectedDoctorId.value = undefined;
     }
   } catch {
-    availableDoctors.value = [];
-    ElMessage.error("Không thể tải danh sách bác sĩ khả dụng");
+    activeDoctors.value = [];
+    ElMessage.error("Không thể tải danh sách bác sĩ đang hoạt động");
   } finally {
     doctorLoading.value = false;
   }
+};
+
+const normalizePatientNote = (value: string) => {
+  const cleaned = value.trim();
+  if (!cleaned) return "";
+
+  const hasPrefix = /^l(ưu|uu)\s*ý\s*:/i.test(cleaned);
+  return hasPrefix ? cleaned : `Lưu ý: ${cleaned}`;
+};
+
+const buildAppointmentNote = () => {
+  const baseNote = normalizePatientNote(form.note || "");
+  if (!selectedDoctorId.value) return baseNote;
+
+  const selectedDoctor = activeDoctors.value.find(
+    (doctor) => doctor.id === selectedDoctorId.value,
+  );
+
+  if (!selectedDoctor) return baseNote;
+
+  const preference = `Bác sĩ mong muốn: ${selectedDoctor.name}`;
+  return baseNote ? `${preference}. ${baseNote}` : preference;
 };
 
 const loadMyAppointments = async () => {
@@ -298,20 +362,20 @@ const handleSubmit = async () => {
     await formRef.value.validate();
     submitting.value = true;
 
-    await appointmentApi.createMy({
+    const createdAppointment = await appointmentApi.createMy({
       patientId: patientId.value,
       workDate: form.workDate,
       shift: form.shift,
-      doctorId: form.doctorId,
-      note: form.note,
+      doctorId: undefined,
+      note: buildAppointmentNote(),
     });
 
     ElMessage.success("Đặt lịch khám thành công");
+    fireAppointmentCreatedEmail(createdAppointment);
     form.workDate = "";
     form.shift = "MORNING";
-    form.doctorId = undefined;
+    selectedDoctorId.value = undefined;
     form.note = "";
-    availableDoctors.value = [];
     await loadMyAppointments();
   } catch (error: any) {
     if (error?.message) {
@@ -324,7 +388,7 @@ const handleSubmit = async () => {
 
 onMounted(async () => {
   try {
-    await loadPatientProfile();
+    await Promise.all([loadPatientProfile(), loadActiveDoctors()]);
     await loadMyAppointments();
   } catch {
     ElMessage.error("Không thể tải dữ liệu bệnh nhân");
@@ -400,6 +464,33 @@ onMounted(async () => {
   }
 
   .booking-form {
+    .doctor-option-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+    }
+
+    .doctor-option-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+
+      span {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+
+    .hint-text {
+      margin-top: 6px;
+      font-size: 12px;
+      color: #6b7280;
+      line-height: 1.4;
+    }
+
     :deep(.el-form-item__label) {
       color: #374151;
       font-size: 16px;

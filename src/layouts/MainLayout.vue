@@ -575,6 +575,15 @@ const activeMenu = computed(() => route.path);
 const menuItems = computed(() => {
   const items = [];
 
+  if (authStore.isAdmin) {
+    items.push({
+      path: "/admin",
+      route: { name: "AdminDashboard" },
+      label: "Dashboard",
+      icon: h(DashboardIcon),
+    });
+  }
+
   // Public site shortcuts
   items.push({
     path: "/public",
@@ -582,132 +591,6 @@ const menuItems = computed(() => {
     label: "Giới thiệu",
     icon: h(DashboardIcon),
   });
-
-  // ========== DOCTOR MENU ==========
-  if (authStore.isDoctor) {
-    items.push(
-      {
-        path: "/my-appointments",
-        route: { name: "MyAppointments" },
-        label: "Lịch hẹn của tôi",
-        icon: h(CalendarCheckIcon),
-      },
-      {
-        path: "/doctor/schedule-requests",
-        route: { name: "DoctorScheduleRequests" },
-        label: "Đăng ký lịch làm việc",
-        icon: h(ScheduleIcon),
-      },
-      {
-        path: "/patients",
-        route: { name: "Patients" },
-        label: "Bệnh nhân",
-        icon: h(PatientIcon),
-      },
-      {
-        path: "/medical-records",
-        route: { name: "MedicalRecords" },
-        label: "Phiếu khám",
-        icon: h(MedicalRecordIcon),
-      },
-      {
-        path: "/treatment-plans",
-        route: { name: "TreatmentPlans" },
-        label: "Kế hoạch điều trị",
-        icon: h(PlanIcon),
-      },
-      {
-        path: "/prescriptions",
-        route: { name: "Prescriptions" },
-        label: "Đơn thuốc",
-        icon: h(PrescriptionIcon),
-      },
-      {
-        path: "/services",
-        route: { name: "Services" },
-        label: "Dịch vụ",
-        icon: h(ServiceIcon),
-      },
-    );
-  }
-
-  // ========== CASHIER MENU ==========
-  if (authStore.isCashier) {
-    items.push(
-      {
-        path: "/appointments",
-        route: { name: "Appointments" },
-        label: "Quản lý lịch khám",
-        icon: h(AppointmentIcon),
-      },
-      {
-        path: "/patients",
-        route: { name: "Patients" },
-        label: "Bệnh nhân",
-        icon: h(PatientIcon),
-      },
-      {
-        path: "/invoices",
-        route: { name: "Invoices" },
-        label: "Hóa đơn",
-        icon: h(InvoiceIcon),
-      },
-      {
-        path: "/medicines",
-        route: { name: "Medicines" },
-        label: "Kho thuốc",
-        icon: h(MedicineIcon),
-      },
-      {
-        path: "/prescriptions",
-        route: { name: "Prescriptions" },
-        label: "Đơn thuốc",
-        icon: h(PrescriptionIcon),
-      },
-      {
-        path: "/inventory-report",
-        route: { name: "InventoryReport" },
-        label: "Báo cáo tồn kho",
-        icon: h(InventoryIcon),
-      },
-      {
-        path: "/services",
-        route: { name: "Services" },
-        label: "Dịch vụ",
-        icon: h(ServiceIcon),
-      },
-      {
-        path: "/public-contents",
-        route: { name: "PublicContents" },
-        label: "Thông tin công khai",
-        icon: h(ServiceIcon),
-      },
-      {
-        path: "/expenses",
-        route: { name: "Expenses" },
-        label: "Chi phí",
-        icon: h(ExpenseIcon),
-      },
-    );
-  }
-
-  // ========== PATIENT MENU ==========
-  if (authStore.isPatient) {
-    items.push(
-      {
-        path: "/patient",
-        route: { name: "PatientDashboard" },
-        label: "Hồ sơ của tôi",
-        icon: h(PatientIcon),
-      },
-      {
-        path: "/patient/appointments",
-        route: { name: "PatientAppointments" },
-        label: "Đặt lịch khám",
-        icon: h(AppointmentIcon),
-      },
-    );
-  }
 
   // ========== ADMIN MENU ==========
   if (authStore.isAdmin) {
@@ -795,6 +678,132 @@ const menuItems = computed(() => {
         route: { name: "Expenses" },
         label: "Chi phí",
         icon: h(ExpenseIcon),
+      },
+    );
+  }
+
+  // ========== CASHIER MENU ==========
+  if (authStore.isCashier) {
+    items.push(
+      {
+        path: "/appointments",
+        route: { name: "Appointments" },
+        label: "Quản lý lịch khám",
+        icon: h(AppointmentIcon),
+      },
+      {
+        path: "/patients",
+        route: { name: "Patients" },
+        label: "Bệnh nhân",
+        icon: h(PatientIcon),
+      },
+      {
+        path: "/invoices",
+        route: { name: "Invoices" },
+        label: "Hóa đơn",
+        icon: h(InvoiceIcon),
+      },
+      {
+        path: "/medicines",
+        route: { name: "Medicines" },
+        label: "Kho thuốc",
+        icon: h(MedicineIcon),
+      },
+      {
+        path: "/prescriptions",
+        route: { name: "Prescriptions" },
+        label: "Đơn thuốc",
+        icon: h(PrescriptionIcon),
+      },
+      {
+        path: "/inventory-report",
+        route: { name: "InventoryReport" },
+        label: "Báo cáo tồn kho",
+        icon: h(InventoryIcon),
+      },
+      {
+        path: "/services",
+        route: { name: "Services" },
+        label: "Dịch vụ",
+        icon: h(ServiceIcon),
+      },
+      {
+        path: "/public-contents",
+        route: { name: "PublicContents" },
+        label: "Thông tin công khai",
+        icon: h(ServiceIcon),
+      },
+      {
+        path: "/expenses",
+        route: { name: "Expenses" },
+        label: "Chi phí",
+        icon: h(ExpenseIcon),
+      },
+    );
+  }
+
+  // ========== DOCTOR MENU ==========
+  if (authStore.isDoctor) {
+    items.push(
+      {
+        path: "/my-appointments",
+        route: { name: "MyAppointments" },
+        label: "Lịch hẹn của tôi",
+        icon: h(CalendarCheckIcon),
+      },
+      {
+        path: "/doctor/schedule-requests",
+        route: { name: "DoctorScheduleRequests" },
+        label: "Đăng ký lịch làm việc",
+        icon: h(ScheduleIcon),
+      },
+      {
+        path: "/patients",
+        route: { name: "Patients" },
+        label: "Bệnh nhân",
+        icon: h(PatientIcon),
+      },
+      {
+        path: "/medical-records",
+        route: { name: "MedicalRecords" },
+        label: "Phiếu khám",
+        icon: h(MedicalRecordIcon),
+      },
+      {
+        path: "/treatment-plans",
+        route: { name: "TreatmentPlans" },
+        label: "Kế hoạch điều trị",
+        icon: h(PlanIcon),
+      },
+      {
+        path: "/prescriptions",
+        route: { name: "Prescriptions" },
+        label: "Đơn thuốc",
+        icon: h(PrescriptionIcon),
+      },
+      {
+        path: "/services",
+        route: { name: "Services" },
+        label: "Dịch vụ",
+        icon: h(ServiceIcon),
+      },
+    );
+  }
+
+  // ========== PATIENT MENU ==========
+  if (authStore.isPatient) {
+    items.push(
+      {
+        path: "/patient",
+        route: { name: "PatientDashboard" },
+        label: "Hồ sơ của tôi",
+        icon: h(PatientIcon),
+      },
+      {
+        path: "/patient/appointments",
+        route: { name: "PatientAppointments" },
+        label: "Đặt lịch khám",
+        icon: h(AppointmentIcon),
       },
     );
   }

@@ -151,6 +151,21 @@
                 ></div>
               </div>
 
+              <div class="invoice-actions mt-4" @click.stop>
+                <el-button
+                  v-if="canPayInvoice(invoice)"
+                  class="pay-vnpay-btn"
+                  :loading="payingInvoiceId === invoice.id"
+                  @click.stop="startVnPayPayment(invoice.id)"
+                >
+                  <el-icon><Wallet /></el-icon>
+                  Thanh toan VNPAY
+                </el-button>
+                <span v-else class="invoice-paid-note"
+                  >Khong can thanh toan them</span
+                >
+              </div>
+
               <div class="mt-4 flex items-center gap-4">
                 <div class="flex-1">
                   <p class="text-xs text-gray-500">Đã thanh toán</p>
@@ -320,8 +335,13 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-import { Tickets, Document, Reading } from "@element-plus/icons-vue";
+import { Tickets, Document, Reading, Wallet } from "@element-plus/icons-vue";
 import { patientApi } from "@/api/patient";
+import {
+  paymentApi,
+  VNPAY_INVOICE_ID_KEY,
+  VNPAY_RETURN_TO_KEY,
+} from "@/api/payment";
 import { notification } from "@/utils/notification";
 import InvoiceDetailDialog from "./components/InvoiceDetailDialog.vue";
 import MedicalRecordDetailDialog from "./components/MedicalRecordDetailDialog.vue";
@@ -345,6 +365,7 @@ const selectedMedicalRecordDetail = ref<MedicalRecordResponse | null>(null);
 const prescriptionDetailVisible = ref(false);
 const prescriptionDetailLoading = ref(false);
 const selectedPrescriptionDetail = ref<PrescriptionResponse | null>(null);
+const payingInvoiceId = ref<string | null>(null);
 
 const patient = ref<PatientResponse>({
   id: "",
@@ -467,6 +488,42 @@ const getPaidPercent = (invoice: InvoiceMyResponse) => {
   const paid = Number(invoice.paidAmount) || 0;
   if (!total || total <= 0) return 0;
   return Math.min(Math.max(Math.round((paid / total) * 100), 0), 100);
+};
+
+const canPayInvoice = (invoice: InvoiceMyResponse) => {
+  const status = String(invoice.status || "");
+  return (
+    getRemainingAmount(invoice) > 0 &&
+    status !== "PAID" &&
+    status !== "CANCELLED" &&
+    status !== "DRAFT"
+  );
+};
+
+const startVnPayPayment = async (invoiceId: string) => {
+  try {
+    payingInvoiceId.value = invoiceId;
+
+    const returnTo = window.location.pathname + window.location.search;
+    localStorage.setItem(VNPAY_RETURN_TO_KEY, returnTo);
+    localStorage.setItem(VNPAY_INVOICE_ID_KEY, invoiceId);
+
+    const paymentRes = await paymentApi.createVnPayPayment({
+      invoiceId,
+      language: "vn",
+    });
+
+    if (!paymentRes?.paymentUrl) {
+      throw new Error("Khong tao duoc link thanh toan VNPAY");
+    }
+
+    // Same-tab redirect so user does not open a new browser tab.
+    window.location.assign(paymentRes.paymentUrl);
+  } catch (error: any) {
+    notification.error(error?.message || "Khong the khoi tao thanh toan VNPAY");
+  } finally {
+    payingInvoiceId.value = null;
+  }
 };
 
 const getGenderLabel = (gender?: string) => {
@@ -690,5 +747,34 @@ onMounted(() => {
 
 .payment-progress-fill {
   @apply h-full rounded-full bg-gradient-to-r from-teal-500 to-cyan-500;
+}
+
+.invoice-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.invoice-paid-note {
+  font-size: 12px;
+  color: #0f766e;
+  font-weight: 600;
+}
+
+.pay-vnpay-btn {
+  border: none !important;
+  color: #ffffff !important;
+  font-weight: 700;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #14b8a6 0%, #0d9488 55%, #0284c7 100%);
+  box-shadow: 0 10px 18px rgba(13, 148, 136, 0.28);
+}
+
+.pay-vnpay-btn:hover {
+  opacity: 0.95;
+}
+
+.pay-vnpay-btn :deep(.el-icon) {
+  margin-right: 6px;
 }
 </style>

@@ -244,6 +244,8 @@ import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { Plus, Search, View, UserFilled, Close } from "@element-plus/icons-vue";
 import { appointmentApi } from "@/api/appointment";
+import { emailApi } from "@/api/email";
+import { userApi } from "@/api/user";
 import CreateAppointmentDialog from "./components/CreateAppointmentDialog.vue";
 import AssignDoctorDialog from "./components/AssignDoctorDialog.vue";
 import type { Appointment, WorkShift } from "@/types";
@@ -286,6 +288,43 @@ const cancelDialogVisible = ref(false);
 const cancelDialogLoading = ref(false);
 const cancelDialogNote = ref("");
 const cancelDialogAppointment = ref<Appointment | null>(null);
+
+const resolvePatientEmail = async (appointment: Appointment) => {
+  if (!appointment.patientId) return undefined;
+
+  try {
+    const patientUser = await userApi.getById(appointment.patientId);
+    const email = patientUser?.email;
+    return typeof email === "string" && email.trim() ? email.trim() : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+const fireAppointmentCancelledEmail = async (
+  appointment: Appointment,
+  reason: string | undefined,
+  cancelAll: boolean,
+) => {
+  const to = await resolvePatientEmail(appointment);
+  if (!to) return;
+
+  await emailApi.sendTemplate({
+    to,
+    subject: cancelAll
+      ? "Thông báo hủy toàn bộ chuỗi lịch khám"
+      : "Thông báo hủy lịch khám",
+    template: "appointment-cancelled",
+    model: {
+      patientName: appointment.patientName || "Bệnh nhân",
+      appointmentCode: appointment.appointmentCode,
+      workDate: formatDate(appointment.workDate),
+      shift: appointment.shift === "MORNING" ? "Ca sáng" : "Ca chiều",
+      reason: reason || "Không có lý do cụ thể",
+      cancelScope: cancelAll ? "Toàn bộ chuỗi lịch khám" : "Lịch khám này",
+    },
+  });
+};
 
 // Methods
 const loadAppointments = async () => {
@@ -337,11 +376,15 @@ const handleCancelAppointment = async () => {
 
   try {
     cancelDialogLoading.value = true;
-    await appointmentApi.cancel(
-      cancelDialogAppointment.value.id,
-      cancelDialogNote.value?.trim() || undefined,
-      false,
-    );
+    const selected = cancelDialogAppointment.value;
+    const reason = cancelDialogNote.value?.trim() || undefined;
+
+    await appointmentApi.cancel(selected.id, reason, false);
+
+    void fireAppointmentCancelledEmail(selected, reason, false).catch(() => {
+      // Best-effort async email.
+    });
+
     ElMessage.success("Đã hủy lịch hẹn");
     cancelDialogVisible.value = false;
     loadAppointments();
@@ -359,11 +402,14 @@ const handleCancelAllAppointments = async () => {
 
   try {
     cancelDialogLoading.value = true;
-    await appointmentApi.cancel(
-      cancelDialogAppointment.value.id,
-      cancelDialogNote.value?.trim() || undefined,
-      true,
-    );
+    const selected = cancelDialogAppointment.value;
+    const reason = cancelDialogNote.value?.trim() || undefined;
+
+    await appointmentApi.cancel(selected.id, reason, true);
+
+    void fireAppointmentCancelledEmail(selected, reason, true).catch(() => {
+      // Best-effort async email.
+    });
 
     ElMessage.success("Đã hủy toàn bộ chuỗi lịch khám");
     cancelDialogVisible.value = false;
