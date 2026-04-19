@@ -4,6 +4,9 @@ import type {
   TimePointAmount,
   CategoryAmount,
   DateRangeParams,
+  YearMonthParams,
+  DashboardAiContextResponse,
+  DashboardAiInsightResponse,
 } from "@/types/dashboard";
 
 export const dashboardApi = {
@@ -39,6 +42,19 @@ export const dashboardApi = {
 
   topDispensedMedicines(params: DateRangeParams) {
     return request.get<CategoryAmount[]>("/dashboard/top-dispensed-medicines", {
+      params,
+    });
+  },
+
+  aiInsight(params: YearMonthParams, timeoutMs: number = 60000) {
+    return request.get<DashboardAiInsightResponse>("/dashboard/ai/insight", {
+      params,
+      timeout: timeoutMs,
+    });
+  },
+
+  aiContext(params: YearMonthParams) {
+    return request.get<DashboardAiContextResponse>("/dashboard/ai/context", {
       params,
     });
   },

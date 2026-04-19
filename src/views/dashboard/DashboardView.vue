@@ -40,6 +40,17 @@
       </div>
     </div>
 
+    <div v-if="authStore.isAdmin" class="ai-month-entry">
+      <button type="button" class="ai-open-btn" @click="aiDialogVisible = true">
+        Mở thống kê tháng
+      </button>
+    </div>
+
+    <DashboardAiAnalysisDialog
+      v-if="authStore.isAdmin"
+      v-model="aiDialogVisible"
+    />
+
     <!-- Bento Grid Layout -->
     <div class="bento-grid" v-loading="loading">
       <!-- Stats Cards - Row 1 -->
@@ -291,6 +302,8 @@
 import { ref, computed, onMounted } from "vue";
 import { ElMessage } from "element-plus";
 import VChart from "vue-echarts";
+import { useAuthStore } from "@/stores/auth";
+import DashboardAiAnalysisDialog from "@/views/dashboard/components/DashboardAiAnalysisDialog.vue";
 import { use } from "echarts/core";
 import { CanvasRenderer } from "echarts/renderers";
 import { LineChart, BarChart, PieChart } from "echarts/charts";
@@ -302,6 +315,8 @@ import {
 } from "echarts/components";
 import { dashboardApi } from "@/api/dashboard";
 import type { DashboardSummary } from "@/types/dashboard";
+
+const authStore = useAuthStore();
 
 // Register ECharts components
 use([
@@ -316,6 +331,7 @@ use([
 ]);
 
 const loading = ref(false);
+const aiDialogVisible = ref(false);
 
 const getCurrentMonthDateRange = (): [string, string] => {
   const now = new Date();
@@ -746,6 +762,21 @@ onMounted(() => {
   p {
     margin: 0;
   }
+}
+
+.ai-month-entry {
+  margin-bottom: 1rem;
+}
+
+.ai-open-btn {
+  border: none;
+  border-radius: 12px;
+  padding: 10px 16px;
+  font-weight: 700;
+  color: #ffffff;
+  background: linear-gradient(135deg, #0d9488 0%, #06b6d4 100%);
+  box-shadow: 0 8px 18px rgba(13, 148, 136, 0.28);
+  cursor: pointer;
 }
 
 .date-filter-card {
