@@ -24,3 +24,31 @@ export interface DateRangeParams {
   from: string;
   to: string;
 }
+
+export interface YearMonthParams {
+  year: number;
+  month: number;
+}
+
+export interface MedicineProcurementSuggestion {
+  medicineName?: string;
+  suggestion?: string;
+  [key: string]: any;
+}
+
+export interface DashboardAiInsightResponse {
+  periodLabel: string;
+  executiveSummary: string;
+  highlights: string[];
+  risks: string[];
+  recommendations: string[];
+  dataQualityNotes: string[];
+  procurementSuggestions: MedicineProcurementSuggestion[];
+}
+
+export interface DashboardAiContextResponse {
+  periodLabel: string;
+  growthMetrics: Record<string, any>;
+  procurementSuggestions?: MedicineProcurementSuggestion[];
+  [key: string]: any;
+}
