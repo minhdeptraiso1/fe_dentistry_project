@@ -33,10 +33,24 @@
           </el-form-item>
 
           <el-form-item label="Ca khám" prop="shift" class="shift-field">
-            <el-radio-group v-model="form.shift">
-              <el-radio-button value="MORNING">Ca sáng</el-radio-button>
-              <el-radio-button value="AFTERNOON">Ca chiều</el-radio-button>
-            </el-radio-group>
+            <div class="shift-buttons">
+              <button
+                type="button"
+                :class="['shift-btn', 'shift-morning', { active: form.shift === 'MORNING' }]"
+                @click="form.shift = 'MORNING'"
+              >
+                <el-icon><Sunrise /></el-icon>
+                <span>Ca sáng</span>
+              </button>
+              <button
+                type="button"
+                :class="['shift-btn', 'shift-afternoon', { active: form.shift === 'AFTERNOON' }]"
+                @click="form.shift = 'AFTERNOON'"
+              >
+                <el-icon><Sunset /></el-icon>
+                <span>Ca chiều</span>
+              </button>
+            </div>
           </el-form-item>
 
           <el-form-item label="Bác sĩ mong muốn (tùy chọn)">
@@ -49,22 +63,32 @@
               :loading="doctorLoading"
             >
               <template #empty>
-                <span>Không có bác sĩ đang hoạt động</span>
+                <span>Không có bác sĩ có ca làm việc vào ngày này</span>
               </template>
               <el-option
                 v-for="doctor in activeDoctors"
-                :key="doctor.id"
-                :label="doctor.name"
-                :value="doctor.id"
+                :key="doctor.doctorId"
+                :label="doctor.doctorName"
+                :value="doctor.doctorId"
+                :disabled="doctor.isFull"
               >
                 <div class="doctor-option-row">
-                  <div class="doctor-option-left">
-                    <el-avatar :size="30" :src="doctor.img || undefined">
-                      {{ doctor.name?.[0] || "?" }}
+                  <div class="doctor-info">
+                    <el-avatar
+                      :size="30"
+                      :src="doctor.img || undefined"
+                      class="doctor-avatar"
+                    >
+                      {{ doctor.doctorName?.[0] || "B" }}
                     </el-avatar>
-                    <span>{{ doctor.name }}</span>
+                    <span class="doctor-name">{{ doctor.doctorName }}</span>
                   </div>
-                  <el-tag type="success" size="small">Đang hoạt động</el-tag>
+                  <el-tag
+                    :type="doctor.isFull ? 'danger' : 'success'"
+                    size="small"
+                  >
+                    {{ doctor.currentPatients }}/{{ doctor.maxPatients }}
+                  </el-tag>
                 </div>
               </el-option>
             </el-select>
@@ -157,24 +181,21 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from "vue";
+import { onMounted, reactive, ref, watch } from "vue";
 import { ElMessage, type FormInstance } from "element-plus";
+import { Sunrise, Sunset } from "@element-plus/icons-vue";
 import { appointmentApi } from "@/api/appointment";
 import { emailApi } from "@/api/email";
 import { patientApi } from "@/api/patient";
+import { doctorCapacityApi } from "@/api/doctorCapacity";
 import { useAuthStore } from "@/stores/auth";
 import type {
   Appointment,
   AppointmentStatus,
   CreateAppointmentRequest,
   WorkShift,
+  AvailableDoctor,
 } from "@/types";
-
-type ActiveDoctorOption = {
-  id: string;
-  name: string;
-  img?: string;
-};
 
 const formRef = ref<FormInstance>();
 const authStore = useAuthStore();
@@ -186,7 +207,7 @@ const listDate = ref(new Date().toISOString().split("T")[0]);
 const patientId = ref("");
 const patientName = ref("");
 const appointments = ref<Appointment[]>([]);
-const activeDoctors = ref<ActiveDoctorOption[]>([]);
+const activeDoctors = ref<AvailableDoctor[]>([]);
 const selectedDoctorId = ref<string | undefined>(undefined);
 
 const form = reactive<CreateAppointmentRequest>({
@@ -282,28 +303,30 @@ const fireAppointmentCreatedEmail = (appointment: Appointment) => {
 };
 
 const loadActiveDoctors = async () => {
+  if (!form.workDate || !form.shift) {
+    activeDoctors.value = [];
+    return;
+  }
+
   try {
     doctorLoading.value = true;
-    const doctors = await patientApi.getActiveDoctors();
-    const safeDoctors = Array.isArray(doctors) ? doctors : [];
-
-    activeDoctors.value = safeDoctors.map((doctor) => ({
-      id: doctor.id,
-      name: doctor.name || "Bác sĩ chưa đặt tên",
-      img: doctor.img,
-    }));
+    const doctors = await doctorCapacityApi.getAvailableDoctors(
+      form.workDate,
+      form.shift,
+    );
+    activeDoctors.value = Array.isArray(doctors) ? doctors : [];
 
     if (
       selectedDoctorId.value &&
       !activeDoctors.value.some(
-        (doctor) => doctor.id === selectedDoctorId.value,
+        (doctor) => doctor.doctorId === selectedDoctorId.value,
       )
     ) {
       selectedDoctorId.value = undefined;
     }
   } catch {
     activeDoctors.value = [];
-    ElMessage.error("Không thể tải danh sách bác sĩ đang hoạt động");
+    ElMessage.error("Không thể tải danh sách bác sĩ có ca làm việc vào ngày này");
   } finally {
     doctorLoading.value = false;
   }
@@ -322,12 +345,12 @@ const buildAppointmentNote = () => {
   if (!selectedDoctorId.value) return baseNote;
 
   const selectedDoctor = activeDoctors.value.find(
-    (doctor) => doctor.id === selectedDoctorId.value,
+    (doctor) => doctor.doctorId === selectedDoctorId.value,
   );
 
   if (!selectedDoctor) return baseNote;
 
-  const preference = `Bác sĩ mong muốn: ${selectedDoctor.name}`;
+  const preference = `Bác sĩ mong muốn: ${selectedDoctor.doctorName}`;
   return baseNote ? `${preference}. ${baseNote}` : preference;
 };
 
@@ -388,11 +411,21 @@ const handleSubmit = async () => {
 
 onMounted(async () => {
   try {
-    await Promise.all([loadPatientProfile(), loadActiveDoctors()]);
+    await loadPatientProfile();
     await loadMyAppointments();
   } catch {
     ElMessage.error("Không thể tải dữ liệu bệnh nhân");
   }
+
+  // Watch for changes in workDate or shift to reload available doctors
+  watch(
+    () => [form.workDate, form.shift],
+    () => {
+      if (form.workDate && form.shift) {
+        loadActiveDoctors();
+      }
+    },
+  );
 });
 </script>
 
@@ -469,19 +502,28 @@ onMounted(async () => {
       align-items: center;
       justify-content: space-between;
       width: 100%;
+      gap: 8px;
     }
 
-    .doctor-option-left {
+    .doctor-info {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       min-width: 0;
+      flex: 1;
+    }
 
-      span {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
+    .doctor-avatar {
+      flex-shrink: 0;
+      background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%) !important;
+      color: white;
+      font-weight: 600;
+    }
+
+    .doctor-name {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .hint-text {
@@ -526,25 +568,70 @@ onMounted(async () => {
     }
 
     .shift-field {
-      :deep(.el-radio-group) {
-        display: inline-flex;
+      :deep(.el-form-item__content) {
+        display: block;
       }
 
-      :deep(.el-radio-button__inner) {
-        min-width: 106px;
+      .shift-buttons {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .shift-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        min-width: 120px;
+        border: 2px solid #d1d5db;
         border-radius: 10px;
+        background: white;
+        color: #6b7280;
+        font-size: 14px;
         font-weight: 600;
+        cursor: pointer;
+        transition: all 0.25s ease;
+
+        i {
+          font-size: 16px;
+        }
+
+        &:hover {
+          border-color: #14b8a6;
+          color: #14b8a6;
+          box-shadow: 0 2px 8px rgba(20, 184, 166, 0.15);
+        }
       }
 
-      :deep(.el-radio-button:first-child .el-radio-button__inner),
-      :deep(.el-radio-button:last-child .el-radio-button__inner) {
-        border-radius: 10px;
+      .shift-morning {
+        &.active {
+          background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+          border-color: #06b6d4;
+          color: white;
+          box-shadow: 0 2px 8px rgba(6, 182, 212, 0.25);
+        }
+
+        &:hover {
+          border-color: #06b6d4;
+          color: #06b6d4;
+          box-shadow: 0 2px 8px rgba(6, 182, 212, 0.15);
+        }
       }
 
-      :deep(.el-radio-button.is-active .el-radio-button__inner) {
-        background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
-        border-color: #14b8a6;
-        box-shadow: 0 2px 8px rgba(20, 184, 166, 0.25);
+      .shift-afternoon {
+        &.active {
+          background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+          border-color: #f59e0b;
+          color: white;
+          box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25);
+        }
+
+        &:hover {
+          border-color: #f59e0b;
+          color: #f59e0b;
+          box-shadow: 0 2px 8px rgba(245, 158, 11, 0.15);
+        }
       }
     }
   }

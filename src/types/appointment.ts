@@ -18,6 +18,8 @@ export interface Appointment {
   doctorId?: string;
   doctorName?: string;
   doctorUsername?: string;
+  treatmentPlanId?: string;
+  treatmentPlanCode?: string;
   parentId?: string;
   sequenceNo?: number;
   workDate: string; // LocalDate
@@ -48,6 +50,7 @@ export interface CreateFollowUpAppointmentRequest {
   shift: WorkShift;
   doctorId?: string;
   note?: string;
+  treatmentPlanId?: string;
 }
 
 export interface AppointmentSearchParams {
@@ -68,6 +71,7 @@ export interface AvailableDoctor {
   currentPatients: number;
   remaining: number;
   isFull: boolean;
+  img?: string;
 }
 
 export interface SetDoctorShiftCapacityRequest {

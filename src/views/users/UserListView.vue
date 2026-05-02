@@ -126,6 +126,15 @@
               Sửa
             </el-button>
             <el-button
+              type="info"
+              size="small"
+              :icon="EyeIcon"
+              @click="handleViewDetail(user)"
+              class="action-button info-button"
+            >
+              Xem chi tiết
+            </el-button>
+            <el-button
               type="danger"
               size="small"
               :icon="TrashIcon"
@@ -320,6 +329,42 @@ const TrashIcon = () =>
       h("path", { d: "M3 6h18" }),
       h("path", { d: "M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" }),
       h("path", { d: "M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" }),
+    ],
+  );
+
+const ResetPasswordIcon = () =>
+  h(
+    "svg",
+    {
+      xmlns: "http://www.w3.org/2000/svg",
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": "2",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+    },
+    [
+      h("rect", { x: "3", y: "11", width: "18", height: "11", rx: "2", ry: "2" }),
+      h("path", { d: "M7 11V7a5 5 0 0 1 10 0v4" }),
+    ],
+  );
+
+const EyeIcon = () =>
+  h(
+    "svg",
+    {
+      xmlns: "http://www.w3.org/2000/svg",
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": "2",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+    },
+    [
+      h("path", { d: "M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" }),
+      h("circle", { cx: "12", cy: "12", r: "3" }),
     ],
   );
 
@@ -708,12 +753,12 @@ onMounted(() => {
   border-top: 1px solid #f3f4f6;
   display: flex;
   justify-content: center;
-  align-items: center;
 }
 
 .action-buttons {
   display: flex;
   gap: 8px;
+  justify-content: center;
 }
 
 :deep(.el-button.action-button) {
@@ -739,6 +784,16 @@ onMounted(() => {
 
     &:hover {
       background: #fee2e2;
+      transform: translateY(-1px);
+    }
+  }
+
+  &.info-button {
+    background: #cff0f5;
+    color: #0891b2;
+
+    &:hover {
+      background: #a5e8f5;
       transform: translateY(-1px);
     }
   }

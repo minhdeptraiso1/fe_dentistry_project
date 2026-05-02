@@ -115,14 +115,6 @@
         </button>
       </div>
     </template>
-
-    <!-- Change Password Dialog -->
-    <ChangePasswordDialog
-      v-if="passwordDialogVisible"
-      v-model="passwordDialogVisible"
-      :user-id="userId"
-      @success="handlePasswordChanged"
-    />
   </el-dialog>
 </template>
 
@@ -130,9 +122,10 @@
 import { ref, computed, watch, h } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { userApi } from "@/api/user";
+import { authApi } from "@/api/auth";
+import { emailApi } from "@/api/email";
 import type { UserDetail, UserRole } from "@/types/user";
 import { UserRoleLabels } from "@/types/user";
-import ChangePasswordDialog from "./ChangePasswordDialog.vue";
 
 // Props & Emits
 interface Props {
@@ -310,7 +303,6 @@ const XIcon = () =>
 // State
 const loading = ref(false);
 const user = ref<UserDetail | null>(null);
-const passwordDialogVisible = ref(false);
 
 const dialogVisible = computed({
   get: () => props.modelValue,
@@ -352,11 +344,62 @@ const getRoleTagType = (role: UserRole): string => {
 };
 
 const handleChangePassword = () => {
-  passwordDialogVisible.value = true;
+  ElMessageBox.prompt(
+    "Nhập mật khẩu mới cho người dùng (tối thiểu 6 ký tự)",
+    "Đổi mật khẩu",
+    {
+      confirmButtonText: "Đổi mật khẩu",
+      cancelButtonText: "Hủy",
+      inputType: "password",
+      inputPlaceholder: "Mật khẩu mới",
+    },
+  )
+    .then(async (data) => {
+      const newPassword = typeof data === "string" ? data : (data as any).value || "";
+      if (!newPassword || newPassword.length < 6) {
+        ElMessage.error("Mật khẩu phải có ít nhất 6 ký tự");
+        return;
+      }
+      // Gọi API đổi mật khẩu
+      try {
+        await authApi.adminResetPassword(user.value!.id, { newPassword });
+        handlePasswordChanged(newPassword);
+      } catch (error: any) {
+        ElMessage.error(
+          error.message || "Lỗi khi đổi mật khẩu"
+        );
+      }
+    })
+    .catch(() => {
+      // Người dùng hủy
+    });
 };
 
-const handlePasswordChanged = () => {
+const firePasswordResetEmail = (userEmail: string, password: string, userName: string) => {
+  if (!userEmail) return;
+
+  emailApi
+    .sendTemplate({
+      to: userEmail,
+      subject: "Mật khẩu mới của bạn",
+      template: "password-reset",
+      model: {
+        userName: userName || "Người dùng",
+        newPassword: password,
+      },
+    })
+    .catch(() => {
+      // Best-effort async call only.
+    });
+};
+
+const handlePasswordChanged = (newPassword: string) => {
   ElMessage.success("Đổi mật khẩu thành công");
+  if (user.value?.email) {
+    firePasswordResetEmail(user.value.email, newPassword, user.value.name);
+  }
+  loadUser();
+  emit("refresh");
 };
 
 const handleToggleEnabled = async () => {

@@ -301,7 +301,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: "update:modelValue", value: boolean): void;
-  (e: "success"): void;
+  (e: "success", recordId?: string): void;
 }>();
 
 // Internal form data interface that includes all fields
@@ -490,11 +490,14 @@ const handleSubmit = async () => {
         diagnosis: formData.diagnosis,
         note: formData.note,
       };
-      await medicalRecordApi.create(createData);
+      const response = await medicalRecordApi.create(createData);
       notification.success("Tạo phiếu khám thành công!");
+      emit("success", response.id);
     }
 
-    emit("success");
+    if (isEdit.value) {
+      emit("success");
+    }
     handleClose();
   } catch (error: any) {
     console.error("Submit medical record error:", error);
