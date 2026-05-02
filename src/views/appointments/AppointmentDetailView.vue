@@ -140,6 +140,32 @@
             </div>
           </div>
         </div>
+
+        <!-- Treatment Plan Information Card -->
+        <div class="info-card">
+          <div class="card-header">
+            <el-icon class="header-icon"><Document /></el-icon>
+            <h3 class="card-title">Kế hoạch điều trị</h3>
+          </div>
+          <div class="card-body">
+            <div v-if="appointment.treatmentPlanId" class="treatment-plan-link">
+              <div class="plan-info">
+                <div class="plan-code">Mã kế hoạch: {{ appointment.treatmentPlanCode }}</div>
+                <button
+                  @click="navigateToTreatmentPlan"
+                  class="navigate-button"
+                >
+                  <el-icon><ArrowRight /></el-icon>
+                  <span>Xem chi tiết kế hoạch điều trị</span>
+                </button>
+              </div>
+            </div>
+            <div v-else class="empty-state-small">
+              <el-icon class="empty-icon"><Warning /></el-icon>
+              <p class="empty-text">Lịch khám này không liên kết với kế hoạch điều trị</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -330,6 +356,7 @@ import { useRouter, useRoute } from "vue-router";
 import { ElMessage, type FormInstance } from "element-plus";
 import {
   ArrowLeft,
+  ArrowRight,
   Document,
   User,
   UserFilled,
@@ -414,6 +441,12 @@ const goBack = () => {
 const navigateToPatient = () => {
   if (appointment.value?.patientId) {
     router.push(`/patients/${appointment.value.patientId}`);
+  }
+};
+
+const navigateToTreatmentPlan = () => {
+  if (appointment.value?.treatmentPlanId) {
+    router.push(`/treatment-plans/${appointment.value.treatmentPlanId}`);
   }
 };
 
@@ -801,6 +834,52 @@ watch(followUpDialogVisible, (visible) => {
       margin: 0;
       color: #9ca3af;
       font-size: 14px;
+    }
+  }
+
+  .treatment-plan-link {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    .plan-info {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+
+      .plan-code {
+        font-size: 14px;
+        color: #6b7280;
+        font-family: monospace;
+      }
+    }
+
+    .navigate-button {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover {
+        box-shadow: 0 4px 12px rgba(20, 184, 166, 0.3);
+        transform: translateX(2px);
+      }
+
+      &:active {
+        transform: translateX(1px);
+      }
+
+      .el-icon {
+        display: flex;
+      }
     }
   }
 

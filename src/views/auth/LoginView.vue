@@ -81,6 +81,9 @@
 
             <div class="remember-row">
               <el-checkbox v-model="rememberMe">Ghi nhớ đăng nhập</el-checkbox>
+              <router-link to="/forgot-password" class="forgot-password-link">
+                Quên mật khẩu?
+              </router-link>
             </div>
 
             <el-button
@@ -222,6 +225,8 @@
         </div>
       </section>
     </div>
+
+    <!-- Forgot Password Dialog -->
   </div>
 </template>
 
@@ -762,6 +767,26 @@ const handleRegister = async () => {
 
 .remember-row {
   margin: 6px 0 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  .forgot-password-link {
+    background: none;
+    border: none;
+    color: #14b8a6;
+    font-size: 13px;
+    text-decoration: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 0.2s ease;
+    padding: 0;
+
+    &:hover {
+      color: #0d9488;
+      text-decoration: underline;
+    }
+  }
 }
 
 .submit-btn {

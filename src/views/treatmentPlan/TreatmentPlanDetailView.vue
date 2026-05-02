@@ -9,6 +9,13 @@
 
       <div v-if="authStore.isAdmin || canEdit" class="header-actions">
         <button
+          @click="handleCreateFollowUp"
+          class="action-button action-button-primary"
+        >
+          <component :is="CalendarIcon" />
+          <span>Tạo tái khám</span>
+        </button>
+        <button
           v-if="canEdit"
           @click="handleEdit"
           class="action-button action-button-warning"
@@ -253,6 +260,15 @@
       :treatment-plan="treatmentPlan"
       @success="loadTreatmentPlan"
     />
+
+    <!-- Follow-up Appointment Dialog -->
+    <CreateFollowUpAppointmentDialog
+      v-if="followUpDialogVisible"
+      v-model="followUpDialogVisible"
+      :appointment-id="selectedAppointmentId"
+      :treatment-plan-id="treatmentPlan?.id || ''"
+      @success="handleFollowUpSuccess"
+    />
   </div>
 </template>
 
@@ -261,6 +277,7 @@ import { ref, computed, onMounted, h } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { treatmentPlanApi } from "@/api/treatmentPlan";
+import { appointmentApi } from "@/api/appointment";
 import { useAuthStore } from "@/stores/auth";
 import type {
   TreatmentPlan,
@@ -268,6 +285,7 @@ import type {
   TreatmentItemStatus,
 } from "@/types/treatmentPlan";
 import TreatmentPlanFormDialog from "./components/TreatmentPlanFormDialog.vue";
+import CreateFollowUpAppointmentDialog from "./components/CreateFollowUpAppointmentDialog.vue";
 
 // Custom Icons
 const BackIcon = () =>
@@ -326,6 +344,26 @@ const TrashIcon = () =>
       h("path", { d: "M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" }),
       h("line", { x1: "10", x2: "10", y1: "11", y2: "17" }),
       h("line", { x1: "14", x2: "14", y1: "11", y2: "17" }),
+    ],
+  );
+
+const CalendarIcon = () =>
+  h(
+    "svg",
+    {
+      xmlns: "http://www.w3.org/2000/svg",
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": "2",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+    },
+    [
+      h("rect", { width: "18", height: "18", x: "3", y: "4", rx: "2", ry: "2" }),
+      h("line", { x1: "16", x2: "16", y1: "2", y2: "6" }),
+      h("line", { x1: "8", x2: "8", y1: "2", y2: "6" }),
+      h("line", { x1: "3", x2: "21", y1: "10", y2: "10" }),
     ],
   );
 
@@ -503,6 +541,8 @@ const authStore = useAuthStore();
 const loading = ref(false);
 const treatmentPlan = ref<TreatmentPlan | null>(null);
 const formDialogVisible = ref(false);
+const followUpDialogVisible = ref(false);
+const selectedAppointmentId = ref<string>("");
 
 const canEdit = computed(() => {
   if (!treatmentPlan.value) return false;
@@ -594,6 +634,36 @@ const handleMarkDone = async (itemId: string) => {
       ElMessage.error("Đánh dấu hoàn thành thất bại");
     }
   }
+};
+
+const handleCreateFollowUp = async () => {
+  if (!treatmentPlan.value) return;
+
+  try {
+    // Get appointments for this treatment plan
+    const response = await appointmentApi.search({
+      treatmentPlanId: treatmentPlan.value.id,
+      page: 0,
+      size: 100,
+    });
+
+    const appointments = response.content || [];
+    if (appointments.length === 0) {
+      ElMessage.error("Chưa có lịch khám nào cho kế hoạch điều trị này");
+      return;
+    }
+
+    // Use the first appointment to create follow-up
+    selectedAppointmentId.value = appointments[0].id;
+    followUpDialogVisible.value = true;
+  } catch (error: any) {
+    ElMessage.error("Không thể tải dữ liệu lịch khám");
+  }
+};
+
+const handleFollowUpSuccess = () => {
+  ElMessage.success("Tạo lịch tái khám thành công");
+  followUpDialogVisible.value = false;
 };
 
 const getStatusType = (status: TreatmentPlanStatus) => {

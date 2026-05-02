@@ -330,7 +330,13 @@ const startAppointment = async (appointment: Appointment) => {
     actionLoading.value = appointment.id;
     await appointmentApi.start(appointment.id);
     ElMessage.success("Đã bắt đầu khám bệnh");
-    loadMyAppointments();
+    
+    // Nếu lịch khám có kế hoạch điều trị, mở kế hoạch đó
+    if (appointment.treatmentPlanId) {
+      router.push(`/treatment-plans/${appointment.treatmentPlanId}`);
+    } else {
+      loadMyAppointments();
+    }
   } catch (error: any) {
     if (error !== "cancel") {
       ElMessage.error(error.message || "Không thể bắt đầu khám");
@@ -433,12 +439,18 @@ const goToMedicalRecord = (appointment: Appointment) => {
   medicalRecordDialogVisible.value = true;
 };
 
-const handleMedicalRecordSuccess = () => {
+const handleMedicalRecordSuccess = (recordId?: string) => {
   medicalRecordDialogVisible.value = false;
   presetPatientId.value = undefined;
   selectedAppointmentId.value = undefined;
   ElMessage.success("Tạo phiếu khám thành công");
-  loadMyAppointments();
+  
+  // Navigate to medical record detail if ID provided
+  if (recordId) {
+    router.push(`/medical-records/${recordId}`);
+  } else {
+    loadMyAppointments();
+  }
 };
 
 const viewMedicalRecord = (appointment: Appointment) => {

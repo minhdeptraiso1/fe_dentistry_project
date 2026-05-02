@@ -39,4 +39,23 @@ export const authApi = {
   changePassword(data: { oldPassword: string; newPassword: string }) {
     return request.post<ApiResponse>("/auth/change-password", data);
   },
+
+  // Forgot password - Request OTP
+  requestForgotPasswordOtp(data: { identifier: string }) {
+    return request.post<string>("/auth/forgot-password/request-otp", data);
+  },
+
+  // Forgot password - Reset with OTP
+  resetPasswordWithOtp(data: {
+    identifier: string;
+    otp: string;
+    newPassword: string;
+  }) {
+    return request.post<string>("/auth/forgot-password/reset-with-otp", data);
+  },
+
+  // Admin reset password
+  adminResetPassword(userId: string, data: { newPassword: string }) {
+    return request.put<string>(`/users/${userId}/admin-reset-password`, data);
+  },
 };
