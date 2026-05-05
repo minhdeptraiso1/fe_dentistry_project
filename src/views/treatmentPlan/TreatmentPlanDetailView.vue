@@ -7,8 +7,9 @@
         <span>Quay lại</span>
       </button>
 
-      <div v-if="authStore.isAdmin || canEdit" class="header-actions">
+      <div v-if="canCreateFollowUp || canEdit || authStore.isAdmin" class="header-actions">
         <button
+          v-if="canCreateFollowUp"
           @click="handleCreateFollowUp"
           class="action-button action-button-primary"
         >
@@ -553,6 +554,16 @@ const canEdit = computed(() => {
   );
 });
 
+const canCreateFollowUp = computed(() => {
+  if (!treatmentPlan.value) return false;
+  return (
+    (authStore.isDoctor || authStore.isAdmin) &&
+    (treatmentPlan.value.status === "DRAFT" ||
+      treatmentPlan.value.status === "APPROVED" ||
+      treatmentPlan.value.status === "IN_PROGRESS")
+  );
+});
+
 const canMarkDone = (status: TreatmentItemStatus) => {
   return (authStore.isDoctor || authStore.isAdmin) && status === "PLANNED";
 };
@@ -784,6 +795,17 @@ onMounted(() => {
     svg {
       width: 20px;
       height: 20px;
+    }
+
+    &.action-button-primary {
+      background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+      color: white;
+      box-shadow: 0 4px 12px rgba(20, 184, 166, 0.3);
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(20, 184, 166, 0.4);
+      }
     }
 
     &.action-button-warning {
