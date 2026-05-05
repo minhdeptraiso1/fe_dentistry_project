@@ -52,8 +52,8 @@
               </button>
             </div>
           </el-form-item>
-
-          <el-form-item label="Bác sĩ mong muốn (tùy chọn)">
+          <!-- Bác sĩ mong muốn nhưng có ai nên comment -->
+          <!-- <el-form-item label="Bác sĩ mong muốn (tùy chọn)">
             <el-select
               v-model="selectedDoctorId"
               placeholder="Chọn bác sĩ mong muốn"
@@ -96,25 +96,35 @@
               Tên bác sĩ mong muốn sẽ được ghi vào ghi chú để nhân viên/admin
               phân công.
             </div>
-          </el-form-item>
+          </el-form-item> -->
 
           <el-form-item label="Ghi chú">
             <el-input
               v-model="form.note"
               type="textarea"
-              :rows="3"
+              :rows="9"
               placeholder="Mô tả triệu chứng hoặc lưu ý cho bác sĩ"
             />
           </el-form-item>
 
-          <el-button
-            type="primary"
-            class="submit-btn"
-            :loading="submitting"
-            @click="handleSubmit"
-          >
-            Đặt lịch khám
-          </el-button>
+          <div class="form-actions">
+            <el-button
+              plain
+              @click="quickConsultDialogVisible = true"
+              class="consult-btn"
+            >
+              <el-icon><ChatDotRound /></el-icon>
+              <span>Tư vấn nhanh</span>
+            </el-button>
+            <el-button
+              type="primary"
+              class="submit-btn"
+              :loading="submitting"
+              @click="handleSubmit"
+            >
+              Đặt lịch khám
+            </el-button>
+          </div>
         </el-form>
       </div>
 
@@ -177,18 +187,25 @@
         </el-table>
       </div>
     </div>
+
+    <!-- Quick Consult Dialog -->
+    <QuickConsultDialog
+      v-model="quickConsultDialogVisible"
+      @select="handleQuickConsultSelect"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { onMounted, reactive, ref, watch } from "vue";
 import { ElMessage, type FormInstance } from "element-plus";
-import { Sunrise, Sunset } from "@element-plus/icons-vue";
+import { Sunrise, Sunset, ChatDotRound } from "@element-plus/icons-vue";
 import { appointmentApi } from "@/api/appointment";
 import { emailApi } from "@/api/email";
 import { patientApi } from "@/api/patient";
 import { doctorCapacityApi } from "@/api/doctorCapacity";
 import { useAuthStore } from "@/stores/auth";
+import QuickConsultDialog from "./components/QuickConsultDialog.vue";
 import type {
   Appointment,
   AppointmentStatus,
@@ -203,6 +220,7 @@ const loading = ref(false);
 const submitting = ref(false);
 const doctorLoading = ref(false);
 const listDate = ref(new Date().toISOString().split("T")[0]);
+const quickConsultDialogVisible = ref(false);
 
 const patientId = ref("");
 const patientName = ref("");
@@ -376,6 +394,35 @@ const loadMyAppointments = async () => {
   } finally {
     loading.value = false;
   }
+};
+
+const handleQuickConsultSelect = (data: { service?: any; doctor?: any; note: string }) => {
+  // Fill in the selected doctor if available
+  if (data.doctor) {
+    // Find doctor by name in available doctors list
+    const matchedDoctor = activeDoctors.value.find(
+      (d) => d.doctorName === data.doctor.name
+    );
+    if (matchedDoctor) {
+      selectedDoctorId.value = matchedDoctor.doctorId;
+    }
+  }
+
+  // Set consultation note to form note
+  if (data.note) {
+    form.note = data.note;
+  }
+
+  // Close dialog and scroll to form
+  quickConsultDialogVisible.value = false;
+  
+  // Scroll to booking card
+  setTimeout(() => {
+    const bookingCard = document.querySelector(".booking-card");
+    bookingCard?.scrollIntoView({ behavior: "smooth" });
+  }, 100);
+
+  ElMessage.success("Thông tin tư vấn đã được thêm vào form");
 };
 
 const handleSubmit = async () => {
@@ -636,6 +683,41 @@ onMounted(async () => {
     }
   }
 
+  .form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+
+    .consult-btn {
+      flex: 0 0 auto;
+      min-width: 140px;
+      height: 42px;
+      border-radius: 10px;
+      font-weight: 600;
+      border: 2px solid #14b8a6;
+      color: #14b8a6;
+      background: white;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: rgba(20, 184, 166, 0.05);
+        box-shadow: 0 2px 8px rgba(20, 184, 166, 0.15);
+      }
+
+      &:active {
+        transform: translateY(1px);
+      }
+
+      :deep(.el-icon) {
+        margin-right: 6px;
+      }
+    }
+
+    .submit-btn {
+      flex: 1;
+    }
+  }
+
   .submit-btn {
     width: 100%;
     height: 42px;
@@ -645,6 +727,11 @@ onMounted(async () => {
     font-weight: 700;
     background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
     box-shadow: 0 2px 8px rgba(20, 184, 166, 0.25);
+
+    &.form-actions .submit-btn {
+      width: auto;
+      flex: 1;
+    }
 
     &:hover {
       transform: translateY(-1px);

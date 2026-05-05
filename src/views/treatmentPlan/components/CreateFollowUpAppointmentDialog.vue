@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    width="600px"
+    width="750px"
     :close-on-click-modal="false"
     :show-close="false"
     class="modern-dialog"
@@ -20,7 +20,7 @@
         ref="formRef"
         :model="form"
         :rules="rules"
-        label-width="140px"
+        label-width="160px"
         label-position="left"
         class="modern-form"
       >
@@ -102,7 +102,7 @@
           <el-input
             v-model="form.note"
             type="textarea"
-            :rows="3"
+            :rows="6"
             placeholder="Mô tả bệnh tình hoặc lưu ý cho bác sĩ"
           />
         </el-form-item>
@@ -290,19 +290,21 @@ watch(
     }
 
     .header-title {
-      font-size: 18px;
+      font-size: 20px;
       font-weight: 600;
+      letter-spacing: 0.3px;
     }
   }
 
   .form-container {
-    padding: 20px 0;
+    padding: 28px 24px;
   }
 
   .modern-form {
     :deep(.el-form-item__label) {
       color: #374151;
-      font-weight: 500;
+      font-weight: 600;
+      font-size: 15px;
     }
 
     :deep(.el-input__wrapper),
@@ -347,13 +349,13 @@ watch(
         display: flex;
         align-items: center;
         gap: 8px;
-        padding: 8px 16px;
-        min-width: 120px;
+        padding: 10px 20px;
+        min-width: 130px;
         border: 2px solid #d1d5db;
         border-radius: 10px;
         background: white;
         color: #6b7280;
-        font-size: 14px;
+        font-size: 15px;
         font-weight: 600;
         cursor: pointer;
         transition: all 0.25s ease;
@@ -429,13 +431,13 @@ watch(
       display: flex;
       align-items: flex-start;
       gap: 8px;
-      padding: 12px;
+      padding: 14px 16px;
       background: #f0fdfa;
       border-left: 3px solid #14b8a6;
       border-radius: 6px;
-      font-size: 13px;
+      font-size: 14px;
       color: #0f766e;
-      line-height: 1.5;
+      line-height: 1.6;
 
       :deep(.el-icon) {
         flex-shrink: 0;
