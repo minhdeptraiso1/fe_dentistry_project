@@ -144,7 +144,6 @@ import type { CreateFollowUpAppointmentRequest, AvailableDoctor, WorkShift } fro
 const props = defineProps<{
   modelValue: boolean;
   appointmentId: string;
-  treatmentPlanId: string;
 }>();
 
 const emit = defineEmits<{
@@ -225,7 +224,6 @@ const handleSubmit = async () => {
       shift: form.shift,
       doctorId: form.doctorId,
       note: form.note || undefined,
-      treatmentPlanId: props.treatmentPlanId,
     });
 
     ElMessage.success("Tạo lịch tái khám thành công");

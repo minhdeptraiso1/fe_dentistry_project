@@ -267,7 +267,6 @@
       v-if="followUpDialogVisible"
       v-model="followUpDialogVisible"
       :appointment-id="selectedAppointmentId"
-      :treatment-plan-id="treatmentPlan?.id || ''"
       @success="handleFollowUpSuccess"
     />
   </div>
