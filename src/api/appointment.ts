@@ -46,6 +46,13 @@ export const appointmentApi = {
     return request.post<Appointment>("/appointments/my", data);
   },
 
+  // Patient cancels own appointment
+  cancelMy(id: string, note?: string) {
+    return request.post<void>(`/appointments/my/${id}/cancel`, null, {
+      params: { note },
+    });
+  },
+
   // Assign doctor to appointment
   assignDoctor(id: string, data: AssignDoctorRequest) {
     return request.post<Appointment>(`/appointments/${id}/assign`, data);

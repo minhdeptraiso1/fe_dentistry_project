@@ -220,6 +220,7 @@
 import { ref, reactive, computed, onMounted, h } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { expenseApi } from "@/api/expense";
+import { sortByCreatedAtDesc } from "@/utils/sort";
 import ExcelJS from "exceljs";
 import {
   type Expense,
@@ -480,7 +481,7 @@ const loadExpenses = async () => {
       page: pagination.page - 1,
       size: pagination.size,
     });
-    expenses.value = response.content;
+    expenses.value = sortByCreatedAtDesc(response.content || []);
     pagination.total = response.totalElements;
   } catch (error: any) {
     ElMessage.error(error.message || "Không thể tải danh sách chi phí");
@@ -557,7 +558,7 @@ const exportExpensesToExcel = async () => {
       size: Math.max(pagination.total || 0, 1000),
     });
 
-    const exportRows = response.content || [];
+    const exportRows = sortByCreatedAtDesc(response.content || []);
 
     if (exportRows.length === 0) {
       ElMessage.warning("Không có dữ liệu để xuất Excel");

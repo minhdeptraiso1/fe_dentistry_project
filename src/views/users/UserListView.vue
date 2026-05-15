@@ -197,6 +197,7 @@
 import { ref, reactive, onMounted, h } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { userApi } from "@/api/user";
+import { sortByCreatedAtDesc } from "@/utils/sort";
 import type { User, UserSearchRequest, UserRole } from "@/types/user";
 import { UserRoleLabels } from "@/types/user";
 import UserFormDialog from "./components/UserFormDialog.vue";
@@ -397,7 +398,7 @@ const loadUsers = async () => {
       pagination.page - 1,
       pagination.size,
     );
-    users.value = response.content;
+    users.value = sortByCreatedAtDesc(response.content || []);
     pagination.total = response.totalElements;
   } catch (error: any) {
     ElMessage.error(error.message || "Không thể tải danh sách người dùng");

@@ -140,6 +140,13 @@ const routes: RouteRecordRaw[] = [
         meta: { title: "Đặt lịch khám", roles: ["PATIENT"] },
       },
       {
+        path: "/patient/appointments/:id",
+        name: "PatientAppointmentDetail",
+        component: () =>
+          import("@/views/patient/PatientAppointmentDetailView.vue"),
+        meta: { title: "Chi tiết lịch hẹn", roles: ["PATIENT"] },
+      },
+      {
         path: "/admin",
         name: "AdminDashboard",
         component: () => import("@/views/dashboard/DashboardView.vue"),

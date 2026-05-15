@@ -269,19 +269,7 @@ const handleDispense = async () => {
       note: note || undefined,
     });
 
-    try {
-      await invoiceApi.createFromPrescription({
-        prescriptionId: prescription.value.id,
-      });
-      ElMessage.success("Xuất thuốc và tạo hóa đơn thành công");
-    } catch (invoiceError: any) {
-      console.error("Dispensed but failed to create invoice:", invoiceError);
-      ElMessage.warning(
-        invoiceError?.message ||
-          "Xuất thuốc thành công nhưng tạo hóa đơn thất bại",
-      );
-    }
-
+    ElMessage.success("Xuất thuốc thành công. Vui lòng tạo hóa đơn sau.");
     loadPrescription();
   } catch (error: any) {
     if (error !== "cancel") {

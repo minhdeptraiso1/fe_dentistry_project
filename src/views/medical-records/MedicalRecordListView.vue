@@ -201,6 +201,7 @@ import { notification } from "@/utils/notification";
 import { medicalRecordApi } from "@/api/medicalRecord";
 import { patientApi } from "@/api/patient";
 import { formatDate } from "@/utils/date";
+import { sortByCreatedAtDesc } from "@/utils/sort";
 import { useAuthStore } from "@/stores/auth";
 import MedicalRecordFormDialog from "./components/MedicalRecordFormDialog.vue";
 import type { MedicalRecord, Patient } from "@/types";
@@ -458,7 +459,7 @@ const loadMedicalRecords = async () => {
     const pageData = await medicalRecordApi.search(params);
 
     // pageData is PageResponse<MedicalRecord> (axios interceptor unwrapped ApiResponse)
-    medicalRecords.value = pageData.content;
+    medicalRecords.value = sortByCreatedAtDesc(pageData.content || []);
     totalElements.value = pageData.totalElements;
     totalPages.value = pageData.totalPages;
   } catch (error: any) {

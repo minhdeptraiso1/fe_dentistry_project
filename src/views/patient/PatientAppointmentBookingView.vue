@@ -1,17 +1,36 @@
 <template>
   <div class="patient-appointment-page">
     <div class="page-header">
-      <div>
-        <h1 class="page-title">Đặt lịch khám</h1>
-        <p class="page-subtitle">
-          Chọn ngày, ca khám và bác sĩ mong muốn để đặt lịch.
-        </p>
+      <div class="page-hero">
+        <div class="hero-icon">
+          <el-icon><Calendar /></el-icon>
+        </div>
+        <div>
+          <h1 class="page-title">Đặt lịch khám</h1>
+          <p class="page-subtitle">
+            Chọn ngày, ca khám và bác sĩ mong muốn để đặt lịch.
+          </p>
+        </div>
+      </div>
+      <div class="page-meta">
+        <span class="meta-chip">Lịch hẹn</span>
+        <span class="meta-chip muted">Bệnh nhân</span>
       </div>
     </div>
 
     <div class="content-grid">
       <div class="booking-card">
-        <h2 class="card-title">Tạo lịch hẹn mới</h2>
+        <div class="card-header">
+          <div class="card-icon">
+            <el-icon><Calendar /></el-icon>
+          </div>
+          <div>
+            <h2 class="card-title">Tạo lịch hẹn mới</h2>
+            <p class="card-subtitle">
+              Điền thông tin lịch khám và gửi yêu cầu.
+            </p>
+          </div>
+        </div>
 
         <el-form
           ref="formRef"
@@ -130,7 +149,17 @@
 
       <div class="list-card">
         <div class="list-header">
-          <h2 class="card-title">Lịch hẹn của tôi</h2>
+          <div class="card-header compact">
+            <div class="card-icon alt">
+              <el-icon><Document /></el-icon>
+            </div>
+            <div>
+              <h2 class="card-title">Lịch hẹn của tôi</h2>
+              <p class="card-subtitle">
+                Theo dõi, xem chi tiết và hủy lịch khi cần.
+              </p>
+            </div>
+          </div>
           <div class="list-actions">
             <el-date-picker
               v-model="listDate"
@@ -184,6 +213,31 @@
               </el-tag>
             </template>
           </el-table-column>
+          <el-table-column label="Thao tác" min-width="220" fixed="right">
+            <template #default="{ row }">
+              <div class="action-buttons">
+                <button
+                  type="button"
+                  class="action-btn action-btn-info"
+                  @click="goToAppointmentDetail(row.id)"
+                  :disabled="rowActionLoading === `detail-${row.id}`"
+                >
+                  <el-icon><View /></el-icon>
+                  <span>Chi tiết</span>
+                </button>
+                <button
+                  v-if="canCancelMyAppointment(row.status)"
+                  type="button"
+                  class="action-btn action-btn-danger"
+                  @click="cancelMyAppointment(row)"
+                  :disabled="rowActionLoading === `cancel-${row.id}`"
+                >
+                  <el-icon><Close /></el-icon>
+                  <span>Hủy</span>
+                </button>
+              </div>
+            </template>
+          </el-table-column>
         </el-table>
       </div>
     </div>
@@ -193,13 +247,22 @@
       v-model="quickConsultDialogVisible"
       @select="handleQuickConsultSelect"
     />
+
   </div>
 </template>
 
 <script setup lang="ts">
 import { onMounted, reactive, ref, watch } from "vue";
-import { ElMessage, type FormInstance } from "element-plus";
-import { Sunrise, Sunset, ChatDotRound } from "@element-plus/icons-vue";
+import { useRouter } from "vue-router";
+import { ElMessage, ElMessageBox, type FormInstance } from "element-plus";
+import {
+  Sunrise,
+  Sunset,
+  ChatDotRound,
+  View,
+  Calendar,
+  Document,
+} from "@element-plus/icons-vue";
 import { appointmentApi } from "@/api/appointment";
 import { emailApi } from "@/api/email";
 import { patientApi } from "@/api/patient";
@@ -216,11 +279,13 @@ import type {
 
 const formRef = ref<FormInstance>();
 const authStore = useAuthStore();
+const router = useRouter();
 const loading = ref(false);
 const submitting = ref(false);
 const doctorLoading = ref(false);
 const listDate = ref(new Date().toISOString().split("T")[0]);
 const quickConsultDialogVisible = ref(false);
+const rowActionLoading = ref<string | null>(null);
 
 const patientId = ref("");
 const patientName = ref("");
@@ -257,6 +322,7 @@ const formatDate = (dateString?: string) => {
   });
 };
 
+
 const getStatusText = (status: AppointmentStatus) => {
   const map: Record<AppointmentStatus, string> = {
     WAITING: "Chờ xác nhận",
@@ -284,6 +350,10 @@ const getDoctorDisplayName = (row: Appointment) => {
     doctorUsername?: string;
   };
   return extended.doctorName || extended.doctorUsername || "Chờ phân công";
+};
+
+const canCancelMyAppointment = (status: AppointmentStatus) => {
+  return status !== "DONE" && status !== "IN_PROGRESS" && status !== "CANCELLED";
 };
 
 const loadPatientProfile = async () => {
@@ -396,6 +466,44 @@ const loadMyAppointments = async () => {
   }
 };
 
+const goToAppointmentDetail = async (appointmentId: string) => {
+  rowActionLoading.value = `detail-${appointmentId}`;
+  router.push(`/patient/appointments/${appointmentId}`);
+  rowActionLoading.value = null;
+};
+
+const cancelMyAppointment = async (appointment: Appointment) => {
+  try {
+    const result = await ElMessageBox.prompt(
+      `Bạn có chắc muốn hủy lịch ${appointment.appointmentCode}? Bạn có thể nhập lý do (không bắt buộc).`,
+      "Xác nhận hủy lịch",
+      {
+        confirmButtonText: "Hủy lịch",
+        cancelButtonText: "Đóng",
+        inputType: "textarea",
+        inputPlaceholder: "Nhập lý do hủy (không bắt buộc)",
+      },
+    );
+
+    const note =
+      typeof result === "object" && "value" in result
+        ? String((result as { value?: string }).value || "").trim()
+        : "";
+
+    rowActionLoading.value = `cancel-${appointment.id}`;
+    await appointmentApi.cancelMy(appointment.id, note || undefined);
+    ElMessage.success("Hủy lịch hẹn thành công");
+
+    await loadMyAppointments();
+  } catch (error: any) {
+    if (error !== "cancel" && error !== "close") {
+      ElMessage.error(error?.message || "Không thể hủy lịch hẹn");
+    }
+  } finally {
+    rowActionLoading.value = null;
+  }
+};
+
 const handleQuickConsultSelect = (data: { service?: any; doctor?: any; note: string }) => {
   // Fill in the selected doctor if available
   if (data.doctor) {
@@ -460,6 +568,7 @@ onMounted(async () => {
   try {
     await loadPatientProfile();
     await loadMyAppointments();
+
   } catch {
     ElMessage.error("Không thể tải dữ liệu bệnh nhân");
   }
@@ -487,6 +596,46 @@ onMounted(async () => {
     background: white;
     border-radius: 16px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+    .page-hero {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .hero-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+      color: white;
+      box-shadow: 0 6px 16px rgba(13, 148, 136, 0.2);
+    }
+
+    .page-meta {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .meta-chip {
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #0d9488;
+      background: #f0fdfa;
+      border: 1px solid #99f6e4;
+
+      &.muted {
+        color: #475569;
+        background: #f8fafc;
+        border-color: #e2e8f0;
+      }
+    }
 
     .page-title {
       margin: 0 0 4px 0;
@@ -519,11 +668,44 @@ onMounted(async () => {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   }
 
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+
+    &.compact {
+      margin-bottom: 0;
+    }
+  }
+
+  .card-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: #ecfeff;
+    color: #0f766e;
+
+    &.alt {
+      background: #eff6ff;
+      color: #1d4ed8;
+    }
+  }
+
   .card-title {
-    margin: 0 0 16px 0;
+    margin: 0;
     font-size: 20px;
     font-weight: 700;
     color: #111827;
+  }
+
+  .card-subtitle {
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: #64748b;
   }
 
   .list-header {
@@ -531,35 +713,9 @@ onMounted(async () => {
     align-items: center;
     justify-content: space-between;
     margin-bottom: 16px;
-
-    .list-actions {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-
-      .list-date-filter {
-        width: 180px;
-      }
-    }
   }
 
   .booking-form {
-    .doctor-option-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      width: 100%;
-      gap: 8px;
-    }
-
-    .doctor-info {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      min-width: 0;
-      flex: 1;
-    }
-
     .doctor-avatar {
       flex-shrink: 0;
       background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%) !important;
@@ -778,6 +934,53 @@ onMounted(async () => {
 
     :deep(.el-table__row:hover td) {
       background: #f0fdfa !important;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: nowrap;
+    }
+  }
+
+  .action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    &.action-btn-info {
+      background: #eff6ff;
+      color: #2563eb;
+
+      &:hover:not(:disabled) {
+        background: #dbeafe;
+        transform: translateY(-1px);
+      }
+    }
+
+    &.action-btn-danger {
+      background: #fef2f2;
+      color: #ef4444;
+
+      &:hover:not(:disabled) {
+        background: #fee2e2;
+        transform: translateY(-1px);
+      }
     }
   }
 

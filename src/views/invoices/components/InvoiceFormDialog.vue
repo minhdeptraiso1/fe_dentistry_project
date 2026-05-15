@@ -99,8 +99,10 @@
         <div class="section-header">
           <div class="header-left">
             <component :is="ServiceIcon" class="section-icon" />
-            <span class="section-title">Danh sách dịch vụ</span>
-            <span class="item-count">{{ form.items.length }} dịch vụ</span>
+            <span class="section-title">Danh sách dịch vụ & thuốc</span>
+            <span class="item-count">{{ form.items.length }} mục</span>
+            <span class="item-count text-blue-600" v-if="servicesCount > 0">({{ servicesCount }} dịch vụ)</span>
+            <span class="item-count text-orange-600" v-if="medicinesCount > 0">({{ medicinesCount }} thuốc)</span>
           </div>
           <button
             type="button"
@@ -113,60 +115,103 @@
           </button>
         </div>
 
-        <el-table
-          :data="form.items"
-          class="modern-table"
-          style="width: 100%"
-          :empty-text="
-            form.treatmentPlanId
-              ? 'Chọn kế hoạch điều trị để tự động tải dịch vụ'
-              : 'Chưa có dịch vụ nào'
-          "
-        >
-          <el-table-column type="index" label="STT" width="60" align="center" />
-          <el-table-column
-            prop="itemName"
-            label="Tên dịch vụ"
-            min-width="250"
-          />
-          <el-table-column prop="serviceCode" label="Mã DV" width="100" />
-          <el-table-column label="SL" width="80" align="center">
-            <template #default="{ row }">
-              {{ row.quantity }}
-            </template>
-          </el-table-column>
-          <el-table-column label="Đơn giá" width="130" align="right">
-            <template #default="{ row }">
-              {{ formatCurrency(row.unitPrice) }}
-            </template>
-          </el-table-column>
-          <el-table-column label="Giảm giá" width="120" align="right">
-            <template #default="{ row }">
-              <span class="text-red-500">{{
-                formatCurrency(row.discountAmount || 0)
-              }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column label="Thành tiền" width="140" align="right">
-            <template #default="{ row }">
-              <span class="amount-value">
-                {{ formatCurrency(calculateLineTotal(row)) }}
-              </span>
-            </template>
-          </el-table-column>
-          <el-table-column
-            v-if="!form.treatmentPlanId"
-            label="Thao tác"
-            width="100"
-            align="center"
+        <!-- Services Table -->
+        <div v-if="servicesCount > 0" class="table-section">
+          <h4 class="table-subtitle">Dịch vụ ({{ servicesCount }})</h4>
+          <el-table
+            :data="servicesItems"
+            class="modern-table service-table"
+            style="width: 100%"
+            :empty-text="'Chưa có dịch vụ nào'"
           >
-            <template #default="{ $index }">
-              <button class="delete-button" @click="handleRemoveItem($index)">
-                <component :is="TrashIcon" />
-              </button>
-            </template>
-          </el-table-column>
-        </el-table>
+            <el-table-column type="index" label="STT" width="60" align="center" />
+            <el-table-column
+              prop="itemName"
+              label="Tên dịch vụ"
+              min-width="250"
+            />
+            <el-table-column prop="serviceCode" label="Mã DV" width="100" />
+            <el-table-column label="SL" width="80" align="center">
+              <template #default="{ row }">
+                {{ row.quantity }}
+              </template>
+            </el-table-column>
+            <el-table-column label="Đơn giá" width="130" align="right">
+              <template #default="{ row }">
+                {{ formatCurrency(row.unitPrice) }}
+              </template>
+            </el-table-column>
+            <el-table-column label="Giảm giá" width="120" align="right">
+              <template #default="{ row }">
+                <span class="text-red-500">{{
+                  formatCurrency(row.discountAmount || 0)
+                }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="Thành tiền" width="140" align="right">
+              <template #default="{ row }">
+                <span class="amount-value">
+                  {{ formatCurrency(calculateLineTotal(row)) }}
+                </span>
+              </template>
+            </el-table-column>
+            <el-table-column
+              v-if="!form.treatmentPlanId"
+              label="Thao tác"
+              width="100"
+              align="center"
+            >
+              <template #default="{ $index }">
+                <button class="delete-button" @click="handleRemoveServiceItem($index)">
+                  <component :is="TrashIcon" />
+                </button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+
+        <!-- Medicines Table -->
+        <div v-if="medicinesCount > 0" class="table-section">
+          <h4 class="table-subtitle">Thuốc ({{ medicinesCount }})</h4>
+          <el-table
+            :data="medicinesItems"
+            class="modern-table medicine-table"
+            style="width: 100%"
+            :empty-text="'Chưa có thuốc nào'"
+          >
+            <el-table-column type="index" label="STT" width="60" align="center" />
+            <el-table-column
+              prop="itemName"
+              label="Tên thuốc"
+              min-width="250"
+            />
+            <el-table-column prop="serviceCode" label="Mã thuốc" width="100" />
+            <el-table-column label="SL" width="80" align="center">
+              <template #default="{ row }">
+                {{ row.quantity }}
+              </template>
+            </el-table-column>
+            <el-table-column label="Đơn giá" width="130" align="right">
+              <template #default="{ row }">
+                {{ formatCurrency(row.unitPrice) }}
+              </template>
+            </el-table-column>
+            <el-table-column label="Giảm giá" width="120" align="right">
+              <template #default="{ row }">
+                <span class="text-red-500">{{
+                  formatCurrency(row.discountAmount || 0)
+                }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="Thành tiền" width="140" align="right">
+              <template #default="{ row }">
+                <span class="amount-value">
+                  {{ formatCurrency(calculateLineTotal(row)) }}
+                </span>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
 
         <!-- Summary Card -->
         <div class="summary-card">
@@ -229,6 +274,7 @@ import { ElMessage } from "element-plus";
 import { invoiceApi } from "@/api/invoice";
 import { patientApi } from "@/api/patient";
 import { treatmentPlanApi } from "@/api/treatmentPlan";
+import { prescriptionApi } from "@/api/prescription";
 import type { Patient } from "@/types";
 import type { TreatmentPlan, TreatmentPlanStatus } from "@/types/treatmentPlan";
 import type { CreateInvoiceItemRequest } from "@/types/invoice";
@@ -349,6 +395,45 @@ const handlePlanChange = async (planId: string) => {
         discountAmount: item.discountAmount || 0,
         note: item.note,
       }));
+
+      // Load prescriptions from medical record and add medicine items
+      try {
+        const prescriptionsResponse = await prescriptionApi.search({
+          medicalRecordId: plan.medicalRecordId,
+          status: "DISPENSED",
+          page: 0,
+          size: 100,
+        });
+
+        // Add medicine items from dispensed prescriptions
+        for (const rxSummary of prescriptionsResponse.content || []) {
+          // Only process prescriptions from this medical record
+          if (rxSummary.medicalRecordId !== plan.medicalRecordId) {
+            continue;
+          }
+
+          // Load full prescription details to get items
+          try {
+            const rx = await prescriptionApi.getById(rxSummary.id);
+
+            for (const item of rx.items || []) {
+              form.items.push({
+                itemName: `Thuốc: ${item.medicineName}`,
+                serviceCode: item.medicineCode,
+                serviceType: "MEDICINE",
+                quantity: item.quantity,
+                unitPrice: 0,
+                discountAmount: 0,
+                note: item.dosage,
+              });
+            }
+          } catch (detailError) {
+            console.error("Failed to load prescription details:", detailError);
+          }
+        }
+      } catch (prescriptionError) {
+        console.error("Failed to load prescriptions:", prescriptionError);
+      }
     } catch (error) {
       console.error("Failed to load treatment plan details:", error);
       ElMessage.error("Không thể tải chi tiết kế hoạch điều trị");
@@ -366,8 +451,15 @@ const handleItemConfirm = (item: CreateInvoiceItemRequest) => {
   form.items.push(item);
 };
 
-const handleRemoveItem = (index: number) => {
-  form.items.splice(index, 1);
+const handleRemoveServiceItem = (index: number) => {
+  const item = servicesItems.value[index];
+  if (!item) {
+    return;
+  }
+  const fullIndex = form.items.indexOf(item);
+  if (fullIndex > -1) {
+    form.items.splice(fullIndex, 1);
+  }
 };
 
 const calculateLineTotal = (item: CreateInvoiceItemRequest) => {
@@ -381,6 +473,22 @@ const subtotal = computed(() => {
 
 const totalAmount = computed(() => {
   return Math.max(0, subtotal.value - (form.discountAmount || 0));
+});
+
+const servicesCount = computed(() => {
+  return form.items.filter(item => item.serviceType !== "MEDICINE").length;
+});
+
+const medicinesCount = computed(() => {
+  return form.items.filter(item => item.serviceType === "MEDICINE").length;
+});
+
+const servicesItems = computed(() => {
+  return form.items.filter(item => item.serviceType !== "MEDICINE");
+});
+
+const medicinesItems = computed(() => {
+  return form.items.filter(item => item.serviceType === "MEDICINE");
 });
 
 const handleSubmit = async () => {
@@ -928,6 +1036,57 @@ loadPatients();
       width: 16px;
       height: 16px;
     }
+  }
+}
+
+.table-section {
+  margin-top: 24px;
+
+  .table-subtitle {
+    margin: 0 0 12px 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: #374151;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    &::before {
+      content: "";
+      display: inline-block;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background-color: #14b8a6;
+    }
+  }
+}
+
+.service-table {
+  :deep(thead) {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  }
+}
+
+.medicine-table {
+  :deep(thead) {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  }
+}
+
+:deep(.medicine-row) {
+  background-color: #fef3c7 !important;
+
+  &:hover {
+    background-color: #fde68a !important;
+  }
+}
+
+:deep(.service-row) {
+  background-color: #f0f9ff !important;
+
+  &:hover {
+    background-color: #e0f2fe !important;
   }
 }
 

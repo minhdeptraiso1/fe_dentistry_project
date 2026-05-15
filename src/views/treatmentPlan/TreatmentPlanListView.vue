@@ -171,6 +171,7 @@ import { useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { treatmentPlanApi } from "@/api/treatmentPlan";
 import { patientApi } from "@/api/patient";
+import { sortByCreatedAtDesc } from "@/utils/sort";
 import { useAuthStore } from "@/stores/auth";
 import type { TreatmentPlan, TreatmentPlanStatus } from "@/types/treatmentPlan";
 import type { Patient } from "@/types";
@@ -335,7 +336,7 @@ const loadTreatmentPlans = async () => {
       );
     }
 
-    tableData.value = content;
+    tableData.value = sortByCreatedAtDesc(content);
     total.value = response.totalElements || 0;
   } catch (error) {
     console.error("Failed to load treatment plans:", error);
