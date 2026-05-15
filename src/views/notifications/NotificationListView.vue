@@ -88,6 +88,7 @@
 import { computed, onMounted, ref, watch } from "vue";
 import { useNotificationStore } from "@/stores/notification";
 import { notificationApi } from "@/api/notification";
+import { sortByCreatedAtDesc } from "@/utils/sort";
 import type { NotificationItem } from "@/types/notification";
 
 const notificationStore = useNotificationStore();
@@ -105,7 +106,7 @@ const loadNotifications = async () => {
       currentPage.value - 1,
       pageSize.value,
     );
-    pageItems.value = (response.content || []).map((item: any) => ({
+    pageItems.value = sortByCreatedAtDesc(response.content || []).map((item: any) => ({
       id: String(item.id),
       title: item.title || "Thông báo",
       content: item.content || "Bạn có thông báo mới",

@@ -195,6 +195,7 @@ import { useRouter } from "vue-router";
 import { ElMessageBox } from "element-plus";
 import { notification } from "@/utils/notification";
 import { serviceApi } from "@/api/service";
+import { sortByCreatedAtDesc } from "@/utils/sort";
 import { useAuthStore } from "@/stores/auth";
 import ServiceFormDialog from "./components/ServiceFormDialog.vue";
 import type { ServiceCatalog, ServiceSearchRequest } from "@/types/service";
@@ -400,7 +401,7 @@ const loadServices = async () => {
     }
 
     const pageData = await serviceApi.search(params);
-    services.value = pageData.content;
+    services.value = sortByCreatedAtDesc(pageData.content || []);
     totalElements.value = pageData.totalElements;
   } catch (error: any) {
     console.error("Load services error:", error);

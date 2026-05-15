@@ -210,6 +210,7 @@ import { ref, reactive, onMounted, h } from "vue";
 import { ElMessage } from "element-plus";
 import { Plus, Search } from "@element-plus/icons-vue";
 import { medicineApi } from "@/api/medicine";
+import { sortByCreatedAtDesc } from "@/utils/sort";
 import { useAuthStore } from "@/stores/auth";
 import type { Medicine } from "@/types/medicine";
 import MedicineFormDialog from "./components/MedicineFormDialog.vue";
@@ -324,7 +325,7 @@ const loadMedicines = async () => {
       size: pagination.size,
     });
 
-    medicines.value = response.content || [];
+    medicines.value = sortByCreatedAtDesc(response.content || []);
     pagination.total = response.totalElements || 0;
   } catch (error) {
     console.error("Failed to load medicines:", error);

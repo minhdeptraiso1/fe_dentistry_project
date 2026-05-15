@@ -35,6 +35,11 @@ export const userApi = {
     return request.get(`/users/${id}`);
   },
 
+  // Get user by patient ID
+  getByPatientId(patientId: string): Promise<UserDetail> {
+    return request.get(`/users/by-patient/${patientId}`);
+  },
+
   // Create new user
   create(data: CreateUserRequest): Promise<User> {
     return request.post("/users", data);

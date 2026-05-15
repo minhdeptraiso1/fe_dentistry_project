@@ -246,6 +246,7 @@ import { Plus, Search, View, UserFilled, Close } from "@element-plus/icons-vue";
 import { appointmentApi } from "@/api/appointment";
 import { emailApi } from "@/api/email";
 import { userApi } from "@/api/user";
+import { sortByCreatedAtDesc } from "@/utils/sort";
 import CreateAppointmentDialog from "./components/CreateAppointmentDialog.vue";
 import AssignDoctorDialog from "./components/AssignDoctorDialog.vue";
 import type { Appointment, WorkShift } from "@/types";
@@ -293,7 +294,7 @@ const resolvePatientEmail = async (appointment: Appointment) => {
   if (!appointment.patientId) return undefined;
 
   try {
-    const patientUser = await userApi.getById(appointment.patientId);
+    const patientUser = await userApi.getByPatientId(appointment.patientId);
     const email = patientUser?.email;
     return typeof email === "string" && email.trim() ? email.trim() : undefined;
   } catch {
@@ -337,7 +338,7 @@ const loadAppointments = async () => {
     };
     const response = await appointmentApi.search(params);
     // Map doctorUsername to doctorName for display
-    appointments.value = response.content.map((apt: any) => ({
+    appointments.value = sortByCreatedAtDesc(response.content || []).map((apt: any) => ({
       ...apt,
       doctorName: apt.doctorUsername || null,
     }));

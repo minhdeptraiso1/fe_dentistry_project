@@ -94,13 +94,6 @@
             {{ row.doctorUsername }}
           </template>
         </el-table-column>
-        <el-table-column label="Số loại thuốc" width="120" align="center">
-          <template #default="{ row }">
-            <span class="item-count">
-              {{ row.items?.length || 0 }}
-            </span>
-          </template>
-        </el-table-column>
         <el-table-column label="Trạng thái" width="130" align="center">
           <template #default="{ row }">
             <el-tag :type="getStatusType(row.status)">
@@ -212,8 +205,8 @@ import { ref, reactive, onMounted, h } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { prescriptionApi } from "@/api/prescription";
-import { invoiceApi } from "@/api/invoice";
 import { patientApi } from "@/api/patient";
+import { sortByCreatedAtDesc } from "@/utils/sort";
 import { useAuthStore } from "@/stores/auth";
 import type { Prescription, PrescriptionStatus } from "@/types/prescription";
 import type { Patient } from "@/types";
@@ -378,7 +371,7 @@ const loadPrescriptions = async () => {
       size: pagination.size,
     });
 
-    prescriptions.value = response.content || [];
+    prescriptions.value = sortByCreatedAtDesc(response.content || []);
     pagination.total = response.totalElements || 0;
   } catch (error) {
     console.error("Failed to load prescriptions:", error);
@@ -466,19 +459,7 @@ const handleDispense = async (prescription: Prescription) => {
       note: note || undefined,
     });
 
-    try {
-      await invoiceApi.createFromPrescription({
-        prescriptionId: prescription.id,
-      });
-      ElMessage.success("Xuất thuốc và tạo hóa đơn thành công");
-    } catch (invoiceError: any) {
-      console.error("Dispensed but failed to create invoice:", invoiceError);
-      ElMessage.warning(
-        invoiceError?.message ||
-          "Xuất thuốc thành công nhưng tạo hóa đơn thất bại",
-      );
-    }
-
+    ElMessage.success("Xuất thuốc thành công. Vui lòng tạo hóa đơn sau.");
     handleSearch();
   } catch (error: any) {
     if (error !== "cancel") {

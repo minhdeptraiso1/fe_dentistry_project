@@ -249,6 +249,7 @@ import { useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { invoiceApi } from "@/api/invoice";
 import { patientApi } from "@/api/patient";
+import { sortByCreatedAtDesc } from "@/utils/sort";
 import { useAuthStore } from "@/stores/auth";
 import type { Invoice, InvoiceStatus } from "@/types/invoice";
 import type { Patient } from "@/types";
@@ -533,7 +534,7 @@ const loadInvoices = async () => {
       page: searchParams.page - 1,
       size: searchParams.size,
     });
-    invoices.value = response.content || [];
+    invoices.value = sortByCreatedAtDesc(response.content || []);
     total.value = response.totalElements || 0;
   } catch (error) {
     console.error("Failed to load invoices:", error);

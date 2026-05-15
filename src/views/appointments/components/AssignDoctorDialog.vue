@@ -173,7 +173,7 @@ const resolvePatientEmail = async (appointment: Appointment) => {
   if (!appointment.patientId) return undefined;
 
   try {
-    const patientUser = await userApi.getById(appointment.patientId);
+    const patientUser = await userApi.getByPatientId(appointment.patientId);
     const email = patientUser?.email;
     return typeof email === "string" && email.trim() ? email.trim() : undefined;
   } catch {
@@ -200,6 +200,7 @@ const fireAssignedDoctorEmail = async (
       workDate: formatDate(appointment.workDate),
       shift: shiftLabel,
       doctorName,
+      cancelUrl: `${window.location.origin}/patient/appointments/${appointment.id}`,
     },
   });
 };

@@ -177,6 +177,7 @@ import { Plus } from "@element-plus/icons-vue";
 import { notification } from "@/utils/notification";
 import { patientApi } from "@/api/patient";
 import { formatDate } from "@/utils/date";
+import { sortByCreatedAtDesc } from "@/utils/sort";
 import PatientFormDialog from "./components/PatientFormDialog.vue";
 import type { Patient } from "@/types";
 
@@ -307,7 +308,7 @@ const loadPatients = async () => {
       size: pageSize.value,
     });
 
-    patients.value = pageData.content || [];
+    patients.value = sortByCreatedAtDesc(pageData.content || []);
     totalElements.value = pageData.totalElements || 0;
     totalPages.value = pageData.totalPages || 0;
   } catch (error: any) {
