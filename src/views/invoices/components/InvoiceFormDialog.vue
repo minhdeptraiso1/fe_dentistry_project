@@ -275,6 +275,7 @@ import { invoiceApi } from "@/api/invoice";
 import { patientApi } from "@/api/patient";
 import { treatmentPlanApi } from "@/api/treatmentPlan";
 import { prescriptionApi } from "@/api/prescription";
+import { medicineApi } from "@/api/medicine";
 import type { Patient } from "@/types";
 import type { TreatmentPlan, TreatmentPlanStatus } from "@/types/treatmentPlan";
 import type { CreateInvoiceItemRequest } from "@/types/invoice";
@@ -417,12 +418,31 @@ const handlePlanChange = async (planId: string) => {
             const rx = await prescriptionApi.getById(rxSummary.id);
 
             for (const item of rx.items || []) {
+              // Load medicine to get salePrice
+              let medicinePrice = 0;
+              try {
+                const medicineResponse = await medicineApi.search({
+                  keyword: item.medicineCode,
+                  page: 0,
+                  size: 1,
+                });
+                const medicine = medicineResponse.content?.[0];
+                if (medicine) {
+                  medicinePrice = Number(medicine.salePrice) || 0;
+                }
+              } catch (medicineError) {
+                console.warn(
+                  `Failed to load medicine price for ${item.medicineCode}:`,
+                  medicineError
+                );
+              }
+
               form.items.push({
                 itemName: `Thuốc: ${item.medicineName}`,
                 serviceCode: item.medicineCode,
                 serviceType: "MEDICINE",
                 quantity: item.quantity,
-                unitPrice: 0,
+                unitPrice: medicinePrice,
                 discountAmount: 0,
                 note: item.dosage,
               });

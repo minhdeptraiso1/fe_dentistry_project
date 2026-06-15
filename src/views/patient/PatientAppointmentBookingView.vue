@@ -12,10 +12,7 @@
           </p>
         </div>
       </div>
-      <div class="page-meta">
-        <span class="meta-chip">Lịch hẹn</span>
-        <span class="meta-chip muted">Bệnh nhân</span>
-      </div>
+      
     </div>
 
     <div class="content-grid">
@@ -71,6 +68,42 @@
               </button>
             </div>
           </el-form-item>
+
+          <el-form-item label="Chọn giờ khám" prop="selectedTimeSlot">
+            <el-select
+              v-model="form.selectedTimeSlot"
+              :placeholder="`Chọn giờ ${form.shift === 'MORNING' ? 'sáng' : 'chiều'}`"
+              style="width: 100%"
+            >
+              <el-option 
+                v-for="hour in availableHours" 
+                :key="hour" 
+                :label="`${hour}h`" 
+                :value="`${hour}`"
+              />
+            </el-select>
+          </el-form-item>
+
+          <el-alert
+            v-if="backendError"
+            title="Cảnh báo: Đã quá giờ đăng kí ca"
+            type="warning"
+            show-icon
+            :closable="true"
+            style="margin-bottom: 16px"
+            @close="backendError = null"
+          >
+            <template #default>
+              <div>
+                <p v-if="form.shift === 'MORNING'">
+                  Hiện tại đã sau 7h sáng. Bạn vẫn có thể đăng kí ca sáng nhưng vui lòng liên hệ phòng khám để xác nhận.
+                </p>
+                <p v-if="form.shift === 'AFTERNOON'">
+                  Hiện tại đã sau 13h chiều. Bạn vẫn có thể đăng kí ca chiều nhưng vui lòng liên hệ phòng khám để xác nhận.
+                </p>
+              </div>
+            </template>
+          </el-alert>
           <!-- Bác sĩ mong muốn nhưng có ai nên comment -->
           <!-- <el-form-item label="Bác sĩ mong muốn (tùy chọn)">
             <el-select
@@ -252,7 +285,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref, watch } from "vue";
+import { computed, onMounted, reactive, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage, ElMessageBox, type FormInstance } from "element-plus";
 import {
@@ -262,6 +295,7 @@ import {
   View,
   Calendar,
   Document,
+  Close,
 } from "@element-plus/icons-vue";
 import { appointmentApi } from "@/api/appointment";
 import { emailApi } from "@/api/email";
@@ -286,6 +320,7 @@ const doctorLoading = ref(false);
 const listDate = ref(new Date().toISOString().split("T")[0]);
 const quickConsultDialogVisible = ref(false);
 const rowActionLoading = ref<string | null>(null);
+const backendError = ref<string | null>(null);
 
 const patientId = ref("");
 const patientName = ref("");
@@ -293,12 +328,20 @@ const appointments = ref<Appointment[]>([]);
 const activeDoctors = ref<AvailableDoctor[]>([]);
 const selectedDoctorId = ref<string | undefined>(undefined);
 
-const form = reactive<CreateAppointmentRequest>({
+const availableHours = computed(() => {
+  if (form.shift === "MORNING") {
+    return [7, 8, 9, 10, 11];
+  }
+  return [13, 14, 15, 16, 17];
+});
+
+const form = reactive<CreateAppointmentRequest & { selectedTimeSlot?: string }>({
   patientId: "",
   workDate: "",
   shift: "MORNING" as WorkShift,
   doctorId: undefined,
   note: "",
+  selectedTimeSlot: undefined,
 });
 
 const rules = {
@@ -308,10 +351,26 @@ const rules = {
   shift: [
     { required: true, message: "Vui lòng chọn ca khám", trigger: "change" },
   ],
+  selectedTimeSlot: [
+    { required: true, message: "Vui lòng chọn giờ khám", trigger: ["change", "blur"] },
+  ],
 };
 
 const disabledDate = (date: Date) =>
   date < new Date(new Date().setHours(0, 0, 0, 0));
+
+const isPastBookingDeadline = computed(() => {
+  const now = new Date();
+  const currentHour = now.getHours();
+
+  if (form.shift === "MORNING" && currentHour >= 7) {
+    return true;
+  }
+  if (form.shift === "AFTERNOON" && currentHour >= 13) {
+    return true;
+  }
+  return false;
+});
 
 const formatDate = (dateString?: string) => {
   if (!dateString) return "N/A";
@@ -429,17 +488,24 @@ const normalizePatientNote = (value: string) => {
 };
 
 const buildAppointmentNote = () => {
-  const baseNote = normalizePatientNote(form.note || "");
-  if (!selectedDoctorId.value) return baseNote;
+  let note = normalizePatientNote(form.note || "");
+
+  // Add time slot info
+  if (form.selectedTimeSlot) {
+    const timeInfo = `Giờ khám mong muốn: ${form.selectedTimeSlot}h`;
+    note = note ? `${timeInfo}. ${note}` : timeInfo;
+  }
+
+  if (!selectedDoctorId.value) return note;
 
   const selectedDoctor = activeDoctors.value.find(
     (doctor) => doctor.doctorId === selectedDoctorId.value,
   );
 
-  if (!selectedDoctor) return baseNote;
+  if (!selectedDoctor) return note;
 
   const preference = `Bác sĩ mong muốn: ${selectedDoctor.doctorName}`;
-  return baseNote ? `${preference}. ${baseNote}` : preference;
+  return note ? `${preference}. ${note}` : preference;
 };
 
 const loadMyAppointments = async () => {
@@ -539,6 +605,7 @@ const handleSubmit = async () => {
   try {
     await formRef.value.validate();
     submitting.value = true;
+    backendError.value = null;
 
     const createdAppointment = await appointmentApi.createMy({
       patientId: patientId.value,
@@ -553,12 +620,11 @@ const handleSubmit = async () => {
     form.workDate = "";
     form.shift = "MORNING";
     selectedDoctorId.value = undefined;
+    form.selectedTimeSlot = undefined;
     form.note = "";
     await loadMyAppointments();
   } catch (error: any) {
-    if (error?.message) {
-      ElMessage.error(error.message);
-    }
+    backendError.value = error?.message || "Có lỗi xảy ra, vui lòng thử lại";
   } finally {
     submitting.value = false;
   }
@@ -579,7 +645,27 @@ onMounted(async () => {
     () => {
       if (form.workDate && form.shift) {
         loadActiveDoctors();
+        // Reset time slot when shift changes
+        form.selectedTimeSlot = undefined;
       }
+      // Clear backend error when user modifies form
+      backendError.value = null;
+    },
+  );
+
+  // Clear backend error when user changes note
+  watch(
+    () => form.note,
+    () => {
+      backendError.value = null;
+    },
+  );
+
+  // Clear backend error when user changes time slot
+  watch(
+    () => form.selectedTimeSlot,
+    () => {
+      backendError.value = null;
     },
   );
 });
